@@ -2,9 +2,10 @@ namespace JournalApp.Models
 {
     public class JournalEntry
     {
-        public String Title = "";
-        public EntryType EType;
-        public DateOnly Date;
-        public String Notes = "";
+        public int Id { get; set; }
+        public String Title { get; set; } = "";
+        public EntryType EType { get; set; }
+        public DateOnly Date { get; set; }
+        public String Notes { get; set; } = "";
     }
 }

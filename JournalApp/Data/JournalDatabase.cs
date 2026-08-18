@@ -38,7 +38,7 @@ namespace JournalApp.Data
             command.ExecuteNonQuery();
         }
 
-        public void CreateEntry(JournalEntry journalEntry)
+        public void SaveEntry(JournalEntry journalEntry)
         {
             using SqliteConnection _connection = 
                 new SqliteConnection($"Data Source={_databasePath}"); // creates db if it doesn't exist based source provided
@@ -56,6 +56,42 @@ namespace JournalApp.Data
             command.Parameters.AddWithValue("notes", journalEntry.Notes);
             command.ExecuteNonQuery();
             _connection.Close();
+        }
+
+        public List<JournalEntry> GetAllEntries()
+        {
+            using SqliteConnection connection =
+                new SqliteConnection($"Data Source={_databasePath}");
+
+            connection.Open();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText =
+                """
+                SELECT * FROM JournalEntries;
+                """;
+            using SqliteDataReader reader = command.ExecuteReader();
+
+            List<JournalEntry> entries = new List<JournalEntry>();
+            while (reader.Read())
+            {
+                JournalEntry entry = ConvertToJournalEntry(reader);
+                entries.Add(entry);
+            }
+            return entries;
+        }
+
+        private JournalEntry ConvertToJournalEntry(SqliteDataReader reader)
+        {
+
+            JournalEntry entry = new JournalEntry();
+
+            entry.Id = reader.GetInt32(reader.GetOrdinal("Id"));
+            entry.Title = reader.GetString(reader.GetOrdinal("Title")); // get the column position and then get the string stored at the position explicitly 
+            entry.EType = (EntryType)reader.GetInt32(reader.GetOrdinal("EntryType")); // convert the stored int value of the enum back to its enum type
+            entry.Date = DateOnly.Parse(reader.GetString(reader.GetOrdinal("EntryDate")));
+            entry.Notes = reader.GetString(reader.GetOrdinal("Notes"));
+
+            return entry;
         }
     }
 }
