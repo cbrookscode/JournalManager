@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:JournalApp"
+
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
@@ -11,7 +12,6 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <TextBlock 
             Grid.Row ="0"
@@ -19,47 +19,24 @@
             Text="Journal App"
             HorizontalAlignment="Center"
         />
-        <Grid Grid.Row="1">
+        <Grid 
+            Grid.Row="1"
+        >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="auto"/>
-                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <TextBox
-                Name="JournalTitle"
-                Margin="10, 5"
-                Text="Enter Title Here" 
-                Grid.Column="0"
-            />
-            <DatePicker
-                Name="EntryDate"
-                Grid.Column="1"
-                Margin="10, 5"
-            />
-            <ComboBox
-                Name="EntryTypeComboBox"
-                Grid.Column="2"
-                Margin="10, 5"
-            >
-            </ComboBox>
+            <Button Grid.Column="0" Margin="5" Click="NewEntry_Click">
+                New Entry
+            </Button>
+            <Button Grid.Column="1" Margin="5" Click="History_Click">
+                History View
+            </Button>
         </Grid>
-        <TextBox 
+        <ContentControl
+            x:Name="MainContent"
             Grid.Row="2"
-            Name="JournalNotes"
-            AcceptsReturn="True"
-            Margin="10, 5"
-            TextWrapping="Wrap" 
-            Text="type notes here" 
-        />
-        <Button 
-            Grid.Row="3"
-            Name ="SaveEntry"
-            Margin="10, 5"
-            Content="Save Entry"
-            Click="Button_Click"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Padding="2"
-        />
+        >
+        </ContentControl>
     </Grid>
 </Window>

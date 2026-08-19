@@ -1,4 +1,7 @@
-﻿using System.Diagnostics;
+﻿using JournalApp.Data;
+using JournalApp.Models;
+using JournalApp.Views;
+using System.Diagnostics;
 using System.Text;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,8 +11,6 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using JournalApp.Data;
-using JournalApp.Models;
 
 namespace JournalApp
 {
@@ -23,36 +24,39 @@ namespace JournalApp
         {
             InitializeComponent();
 
-            EntryTypeComboBox.ItemsSource = Enum.GetValues<EntryType>();
-            EntryTypeComboBox.SelectedItem = EntryType.Daily;
             _journalDatabase = new JournalDatabase();
             _journalDatabase.Initialize();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void NewEntry_Click(object sender, RoutedEventArgs e)
         {
-            DateOnly date = DateOnly.FromDateTime(DateTime.Now);
-            if (EntryDate.SelectedDate != null)
-            {
-                date = DateOnly.FromDateTime((DateTime) EntryDate.SelectedDate);
-            }
+            ShowEntryView();
+        }
 
-            JournalEntry NewEntry = new JournalEntry {
-                Title = JournalTitle.Text,
-                EType = (EntryType) EntryTypeComboBox.SelectedItem,
-                Date = date,
-                Notes = JournalNotes.Text
-            };
-            _journalDatabase.SaveEntry(NewEntry);
-            List<JournalEntry> entries = _journalDatabase.GetAllEntries();
-            for (int i = 0; i < entries.Count; i++)
-            {
-                Debug.WriteLine($"{entries[i].Id}");
-                Debug.WriteLine($"{entries[i].Title}");
-                Debug.WriteLine($"{entries[i].EType}");
-                Debug.WriteLine($"{entries[i].Date}");
-                Debug.WriteLine($"{entries[i].Notes}");
-            }
+        private void History_Click(object sender, RoutedEventArgs e)
+        {
+            ShowHistoryView();
+        }
+
+        private void ShowHistoryView()
+        {
+            HistoryView historyView = new HistoryView(_journalDatabase);
+            MainContent.Content = historyView;
+        }
+        private void ShowEntryView()
+        {
+            JournalEntryView journalEntryView = new JournalEntryView(_journalDatabase);
+            journalEntryView.EntrySaved += HandleEntrySaved;
+            MainContent.Content = journalEntryView;
+        }
+
+        /// <summary>
+        /// Handler for event subscription to EntrySaved when creating a new JournalEntryView
+        /// </summary>
+        /// <param name="journalEntry"></param>
+        private void HandleEntrySaved(JournalEntry journalEntry)
+        {
+            ShowHistoryView();
         }
     }
 }
