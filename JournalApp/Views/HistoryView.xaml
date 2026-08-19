@@ -17,30 +17,34 @@
             Text="History View"
             HorizontalAlignment="Center"
         />
-        <ItemsControl 
-            x:Name="HistoryItems"
-            Grid.Row="1"
-        >
-            <ItemsControl.ItemTemplate>
-                <DataTemplate>
-                    <Expander Margin="2">
-                        <Expander.Header>
+        <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="1">
+            <ItemsControl 
+                x:Name="HistoryItems"
+            >
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Expander Margin="2">
+                            <Expander.Header>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="auto"/>
+                                        <ColumnDefinition Width="auto"/>
+                                        <ColumnDefinition Width="auto"/>
+                                        <ColumnDefinition Width="auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding Date}" TextWrapping="Wrap" Padding="3"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Title, StringFormat='- {0}'}" TextWrapping="Wrap" Padding="3"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding EType,StringFormat='- {0} -'}" TextWrapping="Wrap" Padding="3"/>
+                                    <Button Grid.Column="3" Tag="{Binding Id}" Click="Delete_Click" Margin="2" Padding="2">Delete Entry</Button>
+                                </Grid>
+                            </Expander.Header>
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="auto"/>
-                                    <ColumnDefinition Width="auto"/>
-                                    <ColumnDefinition Width="auto"/>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" Text="{Binding Date}" Padding="3"/>
-                                <TextBlock Grid.Column="1" Text="{Binding Title}" Padding="3"/>
-                                <TextBlock Grid.Column="2" Text="{Binding EType}" Padding="3"/>
+                                <TextBlock Grid.Column="1" Text="{Binding Notes}" TextWrapping="Wrap" Margin="5,2"/>
                             </Grid>
-                        </Expander.Header>
-                        <TextBlock Text="{Binding Notes}" Margin="5,2"/>
-                    </Expander>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-            
-        </ItemsControl>
+                        </Expander>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
     </Grid>
 </UserControl>

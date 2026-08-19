@@ -53,16 +53,6 @@ namespace JournalApp.Views
             };
             _journalDatabase.SaveEntry(NewEntry);
             EntrySaved?.Invoke(NewEntry);
-
-            List<JournalEntry> entries = _journalDatabase.GetAllEntries();
-            for (int i = 0; i < entries.Count; i++)
-            {
-                Debug.WriteLine($"{entries[i].Id}");
-                Debug.WriteLine($"{entries[i].Title}");
-                Debug.WriteLine($"{entries[i].EType}");
-                Debug.WriteLine($"{entries[i].Date}");
-                Debug.WriteLine($"{entries[i].Notes}");
-            }
         }
     }
 }

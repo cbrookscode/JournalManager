@@ -1,6 +1,6 @@
+using JournalApp.Models;
 using Microsoft.Data.Sqlite;
 using System.IO;
-using JournalApp.Models;
 
 namespace JournalApp.Data
 {
@@ -79,7 +79,21 @@ namespace JournalApp.Data
             }
             return entries;
         }
+        public void DeleteEntry(int id)
+        {
+            using SqliteConnection connection =
+                new SqliteConnection($"Data Source={_databasePath}");
 
+            connection.Open();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText =
+                """
+                DELETE FROM JournalEntries
+                WHERE Id = $id;
+                """;
+            command.Parameters.AddWithValue("$id", id);
+            using SqliteDataReader reader = command.ExecuteReader();
+        }
         private JournalEntry ConvertToJournalEntry(SqliteDataReader reader)
         {
 

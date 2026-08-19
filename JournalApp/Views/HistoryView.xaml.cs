@@ -27,6 +27,21 @@ namespace JournalApp.Views
             InitializeComponent();
 
             _journalDatabase = journalDatabase;
+            RefreshEntries();
+        }
+
+        public void Delete_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = (Button)sender;
+
+            int id = (int)button.Tag;
+
+            _journalDatabase.DeleteEntry(id);
+            RefreshEntries();
+        }
+
+        private void RefreshEntries()
+        {
             HistoryItems.ItemsSource = _journalDatabase.GetAllEntries();
         }
     }
