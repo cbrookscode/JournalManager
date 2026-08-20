@@ -11,8 +11,8 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
+using JournalApp.Models;
 
 namespace JournalApp.Views
 {
@@ -34,10 +34,15 @@ namespace JournalApp.Views
         {
             Button button = (Button)sender;
 
-            int id = (int)button.Tag;
+            JournalEntry entry = (JournalEntry) button.Tag;
 
-            _journalDatabase.DeleteEntry(id);
-            RefreshEntries();
+            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow(entry);
+            bool? result = confirmationWindow.ShowDialog();
+            if (result == true)
+            {
+                _journalDatabase.DeleteEntry(entry.Id);
+                RefreshEntries();
+            }
         }
 
         private void RefreshEntries()
