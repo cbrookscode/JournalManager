@@ -1,6 +1,8 @@
 using JournalApp.Models;
 using Microsoft.Data.Sqlite;
+using System.Diagnostics;
 using System.IO;
+using System.Xml.Linq;
 
 namespace JournalApp.Data
 {
@@ -34,8 +36,28 @@ namespace JournalApp.Data
                     EntryDate TEXT NOT NULL,
                     Notes TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS JournalFolders (
+                    Id INTEGER PRIMARY KEY,
+                    Name TEXT NOT NULL,
+                    ParentFolderId INTEGER NULL
+                );
+                CREATE TABLE IF NOT EXISTS SchemaInfo (
+                    Version INTEGER NOT NULL
+                );
+                INSERT INTO SchemaInfo (Version)
+                SELECT 1
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM SchemaInfo
+                );
                 """;
             command.ExecuteNonQuery();
+
+            int version = GetSchemaVersion(_connection);
+            if (version < 2)
+            {
+                MigrateToVersion2(_connection);
+                version = 2;
+            }
         }
 
         public void SaveEntry(JournalEntry journalEntry)
@@ -94,6 +116,48 @@ namespace JournalApp.Data
             command.Parameters.AddWithValue("$id", id);
             using SqliteDataReader reader = command.ExecuteReader();
         }
+
+        public void CreateFolder(JournalFolder folder)
+        {
+            using SqliteConnection _connection = new SqliteConnection($"Data Source = {_databasePath}");
+            _connection.Open();
+            SqliteCommand command = _connection.CreateCommand();
+            command.CommandText =
+                """
+                INSERT INTO JournalFolders (Name, ParentFolderId)
+                VALUES ($name, $parentFolderId);
+                """;
+            command.Parameters.AddWithValue("$name", folder.Name );
+            if (folder.ParentFolderId != null)
+            {
+                command.Parameters.AddWithValue("$parentFolderId", folder.ParentFolderId);
+            } else
+            {
+                command.Parameters.AddWithValue("$parentFolderId", DBNull.Value);
+            }
+            command.ExecuteNonQuery();
+            _connection.Close();
+        }
+
+        public List<JournalFolder> GetAllFolders()
+        {
+            using SqliteConnection _connection = new SqliteConnection($"Data Source = {_databasePath}");
+            _connection.Open();
+            SqliteCommand command = _connection.CreateCommand();
+            command.CommandText =
+                """
+                SELECT * FROM JournalFolders;
+                """;
+            using SqliteDataReader reader = command.ExecuteReader();
+
+            List<JournalFolder> journalFolders = new List<JournalFolder>();
+            while (reader.Read())
+            {
+                JournalFolder folder = ConverToJournalFolder(reader);
+                journalFolders.Add(folder);
+            }
+            return journalFolders;
+        }
         private JournalEntry ConvertToJournalEntry(SqliteDataReader reader)
         {
 
@@ -106,6 +170,63 @@ namespace JournalApp.Data
             entry.Notes = reader.GetString(reader.GetOrdinal("Notes"));
 
             return entry;
+        }
+
+        private JournalFolder ConverToJournalFolder(SqliteDataReader reader)
+        {
+            JournalFolder folder = new JournalFolder();
+            folder.Id = reader.GetInt32(reader.GetOrdinal("Id"));
+            folder.Name = reader.GetString(reader.GetOrdinal("Name"));
+            int parentFolderOrdinal = reader.GetOrdinal("ParentFolderId");
+            if (reader.IsDBNull(parentFolderOrdinal)) 
+            {
+                folder.ParentFolderId = null;
+            } else
+            {
+                folder.ParentFolderId = parentFolderOrdinal;
+            }
+            return folder;
+        }
+
+        private int GetSchemaVersion(SqliteConnection connection)
+        {
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText =
+                """
+                SELECT Version
+                FROM SchemaInfo
+                LIMIT 1;
+                """;
+
+            int version = Convert.ToInt32(command.ExecuteScalar());
+            return version;
+        }
+
+        private void MigrateToVersion2(SqliteConnection connection)
+        {
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText =
+                        """
+                    ALTER TABLE JournalEntries
+                    ADD COLUMN FolderId INTEGER NULL;
+
+                    UPDATE SchemaInfo
+                    SET Version = 2;
+                    """;
+
+                command.ExecuteNonQuery();
+
+                transaction.Commit();
+            }
+            catch
+            {
+                transaction.Rollback();
+                throw;
+            }
         }
     }
 }

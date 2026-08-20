@@ -26,6 +26,7 @@ namespace JournalApp
 
             _journalDatabase = new JournalDatabase();
             _journalDatabase.Initialize();
+            ShowJournalExplorerView();
         }
 
         private void NewEntry_Click(object sender, RoutedEventArgs e)
@@ -38,6 +39,11 @@ namespace JournalApp
             ShowHistoryView();
         }
 
+        private void JournalExplorer_Click(object sender, RoutedEventArgs e)
+        {
+            ShowJournalExplorerView();
+        }
+
         private void ShowHistoryView()
         {
             HistoryView historyView = new HistoryView(_journalDatabase);
@@ -48,6 +54,12 @@ namespace JournalApp
             JournalEntryView journalEntryView = new JournalEntryView(_journalDatabase);
             journalEntryView.EntrySaved += HandleEntrySaved;
             MainContent.Content = journalEntryView;
+        }
+
+        private void ShowJournalExplorerView()
+        {
+            JournalExplorerView journalExplorerView = new JournalExplorerView();
+            MainContent.Content = journalExplorerView;
         }
 
         /// <summary>

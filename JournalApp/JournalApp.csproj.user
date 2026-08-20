@@ -2,6 +2,9 @@
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup />
   <ItemGroup>
+    <Compile Update="Views\AddFolderWindow.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\DeleteConfirmationWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -9,6 +12,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Update="Views\JournalEntryView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="Views\JournalExplorerView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

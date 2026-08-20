@@ -25,11 +25,15 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
-            <Button Grid.Column="0" Margin="5" Click="NewEntry_Click">
+            <Button Grid.Column="0" Margin="5" Click="JournalExplorer_Click">
+                Journal Explorer
+            </Button>
+            <Button Grid.Column="1" Margin="5" Click="NewEntry_Click">
                 New Entry
             </Button>
-            <Button Grid.Column="1" Margin="5" Click="History_Click">
+            <Button Grid.Column="2" Margin="5" Click="History_Click">
                 History View
             </Button>
         </Grid>
