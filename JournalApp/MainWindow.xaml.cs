@@ -58,7 +58,7 @@ namespace JournalApp
 
         private void ShowJournalExplorerView()
         {
-            JournalExplorerView journalExplorerView = new JournalExplorerView();
+            JournalExplorerView journalExplorerView = new JournalExplorerView(_journalDatabase);
             MainContent.Content = journalExplorerView;
         }
 

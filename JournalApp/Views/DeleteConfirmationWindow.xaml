@@ -14,17 +14,11 @@
             <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Margin="3" Text="Are you sure you want to delete the below entry?"/>
-        <TextBlock Grid.Row="1" Margin="3" HorizontalAlignment="Center">
-            <TextBlock.Text>
-                <MultiBinding StringFormat="{}{0} - {1}">
-                    <Binding Path="Date"/>
-                    <Binding Path="Title"/>
-                </MultiBinding>
-            </TextBlock.Text>
-        </TextBlock>
-        <Grid Grid.Row="2" HorizontalAlignment="Right" Margin="3">
+        <TextBlock Grid.Row="1" x:Name="TitleText" Margin="3" HorizontalAlignment="Center"/>
+        <TextBlock Grid.Row="2" x:Name="MessageText" Margin="3" HorizontalAlignment="Center"/>
+        <Grid Grid.Row="3" HorizontalAlignment="Right" Margin="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>

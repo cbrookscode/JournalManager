@@ -30,7 +30,17 @@ namespace JournalApp.Views
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
+            ShowAddFolderWindow();
+        }
 
+        private void ShowAddFolderWindow()
+        {
+            AddFolderWindow addFolderWindow = new AddFolderWindow(_journalDatabase);
+            bool? result = addFolderWindow.ShowDialog();
+            if (result == true)
+            {
+                _journalDatabase.CreateFolder(addFolderWindow.CreatedFolder); // is the folder that was created by the window, need to add to database
+            }
         }
     }
 }

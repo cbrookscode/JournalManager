@@ -13,6 +13,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using JournalApp.Models;
+using System.Diagnostics;
+using System.Collections.ObjectModel;
 
 namespace JournalApp.Views
 {
@@ -21,17 +23,62 @@ namespace JournalApp.Views
     /// </summary>
     public partial class AddFolderWindow : Window
     {
+        public JournalFolder CreatedFolder { get; set; } = new JournalFolder();
+
         private JournalDatabase _journalDatabase;
+        private ObservableCollection<JournalFolder> _folders;
+        private Dictionary<int, JournalFolder> _folderDict;
         public AddFolderWindow(JournalDatabase journalDatabase)
         {
             InitializeComponent();
             _journalDatabase = journalDatabase;
-            FolderView.ItemsSource = _journalDatabase.SetupChildrenFolders(_journalDatabase.GetAllFolders());
+            (_folders, _folderDict) = _journalDatabase.SetupChildrenFolders(_journalDatabase.GetAllFolders());
+            FolderView.ItemsSource = _folders;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private void Submit_Click(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(FolderName.Text))
+            {
+                DialogResult = false;
+                return;
+            }
 
+            CreatedFolder.Name = FolderName.Text;
+            CreatedFolder.ParentFolderId = null;
+
+            if (FolderView.SelectedItem is JournalFolder selectedFolder)
+            {
+                CreatedFolder.ParentFolderId = selectedFolder.Id;
+            }
+            DialogResult = true;
+        }
+
+        public void Delete_Click(object sender, RoutedEventArgs e)
+        {
+            Button button = (Button)sender;
+
+            JournalFolder folder = (JournalFolder)button.Tag;
+
+            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow("You are about to delete the following folder:", folder.Name);
+            bool? result = confirmationWindow.ShowDialog();
+            if (result == true)
+            {
+                _journalDatabase.DeleteFolder(folder.Id);
+                if (folder.ParentFolderId != null)
+                {
+                    if (_folderDict.TryGetValue(folder.ParentFolderId.Value, out JournalFolder? parent))
+                    {
+                        if (parent != null)
+                        {
+                            parent.Children.Remove(folder);
+                        }
+                    }
+                } else
+                {
+                    _folders.Remove(folder);
+                }
+            }
         }
     }
 }

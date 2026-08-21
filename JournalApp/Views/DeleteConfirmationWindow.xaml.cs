@@ -20,10 +20,11 @@ namespace JournalApp.Views
     /// </summary>
     public partial class DeleteConfirmationWindow : Window
     {
-        public DeleteConfirmationWindow(JournalEntry entry)
+        public DeleteConfirmationWindow(string title, string message)
         {
             InitializeComponent();
-            DataContext = entry;
+            TitleText.Text = title;
+            MessageText.Text = message;
         }
 
         public void Delete_Click(object sender, RoutedEventArgs e)

@@ -1,5 +1,6 @@
 using JournalApp.Models;
 using Microsoft.Data.Sqlite;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Xml.Linq;
@@ -139,6 +140,22 @@ namespace JournalApp.Data
             _connection.Close();
         }
 
+        public void DeleteFolder(int id)
+        {
+            using SqliteConnection connection =
+                new SqliteConnection($"Data Source={_databasePath}");
+
+            connection.Open();
+            SqliteCommand command = connection.CreateCommand();
+            command.CommandText =
+                """
+                DELETE FROM JournalFolders
+                WHERE Id = $id;
+                """;
+            command.Parameters.AddWithValue("$id", id);
+            using SqliteDataReader reader = command.ExecuteReader();
+        }
+
         public List<JournalFolder> GetAllFolders()
         {
             using SqliteConnection _connection = new SqliteConnection($"Data Source = {_databasePath}");
@@ -159,9 +176,9 @@ namespace JournalApp.Data
             return journalFolders;
         }
 
-        public List<JournalFolder> SetupChildrenFolders(List<JournalFolder> folders)
+        public (ObservableCollection<JournalFolder>, Dictionary<int, JournalFolder>) SetupChildrenFolders(List<JournalFolder> folders)
         {
-            List<JournalFolder> finalList = new List<JournalFolder>();
+            ObservableCollection<JournalFolder> finalList = new ObservableCollection<JournalFolder>();
             Dictionary<int, JournalFolder> folderDict = new Dictionary<int, JournalFolder>();
 
             foreach (JournalFolder folder in folders)
@@ -187,7 +204,7 @@ namespace JournalApp.Data
                     }
                 }
             }
-            return finalList;
+            return (finalList, folderDict);
         }
         private JournalEntry ConvertToJournalEntry(SqliteDataReader reader)
         {

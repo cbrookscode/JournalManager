@@ -7,17 +7,29 @@
         mc:Ignorable="d"
         Title="AddFolderWindow" Height="450" Width="800">
     <Grid>
-        <TextBlock Text="Folder Name"/>
-        <TextBox Name="FolderName"/>
-        <TextBlock Text="Parent"/>
-        <TreeView x:Name="FolderView">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row ="0" Text="Folder Name"/>
+        <TextBox Grid.Row ="1" Name="FolderName"/>
+        <TextBlock Grid.Row ="2" Text="Parent"/>
+        <TreeView Grid.Row ="3" x:Name="FolderView">
             <TreeView.ItemTemplate>
                 <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                    <TextBlock Text="{Binding Name}"/>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding Name}" Margin="3" VerticalAlignment="Center"/>
+                        <Button Tag="{Binding}" Click="Delete_Click" Margin="5">
+                            Delete
+                        </Button>
+                    </StackPanel>
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>
-        <Button Click="Button_Click">
+        <Button Grid.Row ="4" Click="Submit_Click" Margin="5" HorizontalAlignment="Right">
             Submit
         </Button>
     </Grid>
