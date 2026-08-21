@@ -158,6 +158,37 @@ namespace JournalApp.Data
             }
             return journalFolders;
         }
+
+        public List<JournalFolder> SetupChildrenFolders(List<JournalFolder> folders)
+        {
+            List<JournalFolder> finalList = new List<JournalFolder>();
+            Dictionary<int, JournalFolder> folderDict = new Dictionary<int, JournalFolder>();
+
+            foreach (JournalFolder folder in folders)
+            {
+                if (folder.ParentFolderId == null)
+                {
+                    finalList.Add(folder);
+                }
+                folder.Children.Clear();
+                folderDict[folder.Id] = folder;
+            }
+
+            foreach (JournalFolder folder in folders)
+            {
+                if (folder.ParentFolderId != null)
+                {
+                    if (folderDict.TryGetValue((int) folder.ParentFolderId, out JournalFolder? parentFolder)) 
+                    {
+                        parentFolder.Children.Add(folder);
+                    } else
+                    {
+                        Debug.WriteLine("Couldnt get value associate with parenfolderid passed in");
+                    }
+                }
+            }
+            return finalList;
+        }
         private JournalEntry ConvertToJournalEntry(SqliteDataReader reader)
         {
 

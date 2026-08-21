@@ -26,17 +26,12 @@ namespace JournalApp.Views
         {
             InitializeComponent();
             _journalDatabase = journalDatabase;
-            ParentFolderOptions.ItemsSource = _journalDatabase.GetAllFolders();
+            FolderView.ItemsSource = _journalDatabase.SetupChildrenFolders(_journalDatabase.GetAllFolders());
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            JournalFolder folder = new JournalFolder
-            {
-                Name = FolderName.Name,
-                ParentFolderId = ParentFolderOptions.Text // need to make name for the field unique so that i can lookup by name and grab the parents id
-            };
-            _journalDatabase.CreateFolder()
+
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JournalApp.Data;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,10 +21,16 @@ namespace JournalApp.Views
     /// </summary>
     public partial class JournalExplorerView : UserControl
     {
-        public JournalExplorerView()
+        private JournalDatabase _journalDatabase;
+        public JournalExplorerView(JournalDatabase journalDatabase)
         {
             InitializeComponent();
+            _journalDatabase = journalDatabase;
         }
 
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

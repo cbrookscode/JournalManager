@@ -10,7 +10,13 @@
         <TextBlock Text="Folder Name"/>
         <TextBox Name="FolderName"/>
         <TextBlock Text="Parent"/>
-        <ComboBox Name="ParentFolderOptions"/>
+        <TreeView x:Name="FolderView">
+            <TreeView.ItemTemplate>
+                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                    <TextBlock Text="{Binding Name}"/>
+                </HierarchicalDataTemplate>
+            </TreeView.ItemTemplate>
+        </TreeView>
         <Button Click="Button_Click">
             Submit
         </Button>

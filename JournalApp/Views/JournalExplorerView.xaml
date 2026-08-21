@@ -16,7 +16,7 @@
                 <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
             <TextBlock Text="Journal Explorer View"/>
-            <Button Grid.Column="1" Margin="5">
+            <Button Grid.Column="1" Margin="5" Click="Button_Click">
                 Create Folder
             </Button>
         </Grid>
