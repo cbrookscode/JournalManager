@@ -3,8 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:JournalApp.Views"
-        xmlns:models="clr-namespace:JournalApp.Models"
+        xmlns:views="clr-namespace:JournalApp.Views"
         mc:Ignorable="d"
         Title="AddFolderWindow" Height="450" Width="800">
     <Grid>
@@ -18,26 +17,7 @@
         <TextBlock Grid.Row ="0" Text="Folder Name"/>
         <TextBox Grid.Row ="1" Name="FolderName"/>
         <TextBlock Grid.Row ="2" Text="Parent"/>
-        <TreeView Grid.Row ="3" x:Name="FolderView">
-            <TreeView.Resources>
-                <HierarchicalDataTemplate DataType="{x:Type models:JournalFolder}" ItemsSource="{Binding Children}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}" Margin="3" VerticalAlignment="Center"/>
-                        <Button Tag="{Binding}" Click="Delete_Click" Margin="5">
-                            Delete
-                        </Button>
-                    </StackPanel>
-                </HierarchicalDataTemplate>
-                <DataTemplate DataType="{x:Type models:JournalEntry}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name, StringFormat=📄 - {0}}"/>
-                        <Button Tag="{Binding}" Click="Delete_Click" Margin="5">
-                            Delete
-                        </Button>
-                    </StackPanel>
-                </DataTemplate>
-            </TreeView.Resources>
-        </TreeView>
+        <views:FolderTreeView  x:Name="FolderTree" Grid.Row="3"/>
         <Button Grid.Row ="4" Click="Submit_Click" Margin="5" HorizontalAlignment="Right">
             Submit
         </Button>

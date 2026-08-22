@@ -8,6 +8,9 @@
     <Compile Update="Views\DeleteConfirmationWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\FolderTreeView.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\HistoryView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
