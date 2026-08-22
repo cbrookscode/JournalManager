@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Controls;
 using System.Xml.Linq;
 
 namespace JournalApp.Data
@@ -73,7 +74,7 @@ namespace JournalApp.Data
                 INSERT INTO JournalEntries (Title, EntryType, EntryDate, Notes)
                 VALUES($title, $entryType, $entryDate, $notes);
                 """;
-            command.Parameters.AddWithValue("$title", journalEntry.Title);
+            command.Parameters.AddWithValue("$title", journalEntry.Name);
             command.Parameters.AddWithValue("$entryType", (int)journalEntry.EType);
             command.Parameters.AddWithValue("$entryDate", journalEntry.Date.ToString("yyyy-MM-dd"));
             command.Parameters.AddWithValue("notes", journalEntry.Notes);
@@ -176,31 +177,53 @@ namespace JournalApp.Data
             return journalFolders;
         }
 
-        public (ObservableCollection<JournalFolder>, Dictionary<int, JournalFolder>) SetupChildrenFolders(List<JournalFolder> folders)
+        public (ObservableCollection<JournalTreeItem>, Dictionary<int, JournalFolder>) SetupChildrenFolders(List<JournalTreeItem> tree)
         {
-            ObservableCollection<JournalFolder> finalList = new ObservableCollection<JournalFolder>();
+            ObservableCollection<JournalTreeItem> finalList = new ObservableCollection<JournalTreeItem>();
             Dictionary<int, JournalFolder> folderDict = new Dictionary<int, JournalFolder>();
 
-            foreach (JournalFolder folder in folders)
+            foreach (JournalTreeItem treeItem in tree)
             {
-                if (folder.ParentFolderId == null)
+                if (treeItem is JournalEntry entry)
                 {
-                    finalList.Add(folder);
+                    if (entry.FolderId == null)
+                    {
+                        finalList.Add(entry);
+                    }
+                } else if (treeItem is JournalFolder folder)
+                {
+                    if (folder.ParentFolderId == null)
+                    {
+                        finalList.Add(folder);
+                    }
+                    folder.Children.Clear();
+                    folderDict[folder.Id] = folder;
                 }
-                folder.Children.Clear();
-                folderDict[folder.Id] = folder;
             }
 
-            foreach (JournalFolder folder in folders)
+            foreach (JournalTreeItem treeItem in tree)
             {
-                if (folder.ParentFolderId != null)
+                if (treeItem is JournalEntry entry)
                 {
-                    if (folderDict.TryGetValue((int) folder.ParentFolderId, out JournalFolder? parentFolder)) 
+                    if (entry.FolderId != null)
                     {
-                        parentFolder.Children.Add(folder);
-                    } else
+                        if (folderDict.TryGetValue((int)entry.FolderId, out JournalFolder? parentFolder))
+                        {
+                            parentFolder.Children.Add(entry);
+                        }
+                    }
+                } else if (treeItem is JournalFolder folder)
+                {
+                    if (folder.ParentFolderId != null)
                     {
-                        Debug.WriteLine("Couldnt get value associate with parenfolderid passed in");
+                        if (folderDict.TryGetValue((int)folder.ParentFolderId, out JournalFolder? parentFolder))
+                        {
+                            parentFolder.Children.Add(folder);
+                        }
+                        else
+                        {
+                            Debug.WriteLine("Couldnt get value associate with parenfolderid passed in");
+                        }
                     }
                 }
             }
@@ -212,7 +235,7 @@ namespace JournalApp.Data
             JournalEntry entry = new JournalEntry();
 
             entry.Id = reader.GetInt32(reader.GetOrdinal("Id"));
-            entry.Title = reader.GetString(reader.GetOrdinal("Title")); // get the column position and then get the string stored at the position explicitly 
+            entry.Name = reader.GetString(reader.GetOrdinal("Title")); // get the column position and then get the string stored at the position explicitly 
             entry.EType = (EntryType)reader.GetInt32(reader.GetOrdinal("EntryType")); // convert the stored int value of the enum back to its enum type
             entry.Date = DateOnly.Parse(reader.GetString(reader.GetOrdinal("EntryDate")));
             entry.Notes = reader.GetString(reader.GetOrdinal("Notes"));

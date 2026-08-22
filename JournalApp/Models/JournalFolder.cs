@@ -7,12 +7,10 @@ using System.Threading.Tasks;
 
 namespace JournalApp.Models
 {
-    public class JournalFolder
+    public class JournalFolder : JournalTreeItem
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
         public int? ParentFolderId { get; set; } = null;
 
-        public ObservableCollection<JournalFolder> Children { get; set; } = new();
+        public ObservableCollection<JournalTreeItem> Children { get; set; } = new();
     }
 }

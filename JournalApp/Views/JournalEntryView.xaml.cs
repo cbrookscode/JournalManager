@@ -46,7 +46,7 @@ namespace JournalApp.Views
 
             JournalEntry NewEntry = new JournalEntry
             {
-                Title = JournalTitle.Text,
+                Name = JournalTitle.Text,
                 EType = (EntryType)EntryTypeComboBox.SelectedItem,
                 Date = date,
                 Notes = JournalNotes.Text

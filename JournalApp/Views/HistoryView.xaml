@@ -33,7 +33,7 @@
                                         <ColumnDefinition Width="auto"/>
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{Binding Date}" TextWrapping="Wrap" Padding="3"/>
-                                    <TextBlock Grid.Column="1" Text="{Binding Title, StringFormat='- {0}'}" TextWrapping="Wrap" Padding="3"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name, StringFormat='- {0}'}" TextWrapping="Wrap" Padding="3"/>
                                     <TextBlock Grid.Column="2" Text="{Binding EType,StringFormat='- {0} -'}" TextWrapping="Wrap" Padding="3"/>
                                     <Button Grid.Column="3" Tag="{Binding}" Click="Delete_Click" Margin="2" Padding="2">Delete Entry</Button>
                                 </Grid>

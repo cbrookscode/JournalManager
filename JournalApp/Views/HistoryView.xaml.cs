@@ -36,7 +36,7 @@ namespace JournalApp.Views
 
             JournalEntry entry = (JournalEntry) button.Tag;
 
-            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow("You are about to delete the following entry:", entry.Title);
+            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow("You are about to delete the following entry:", entry.Name);
             bool? result = confirmationWindow.ShowDialog();
             if (result == true)
             {

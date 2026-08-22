@@ -26,14 +26,18 @@ namespace JournalApp.Views
         public JournalFolder CreatedFolder { get; set; } = new JournalFolder();
 
         private JournalDatabase _journalDatabase;
-        private ObservableCollection<JournalFolder> _folders;
+        private ObservableCollection<JournalTreeItem> _folderTree;
         private Dictionary<int, JournalFolder> _folderDict;
         public AddFolderWindow(JournalDatabase journalDatabase)
         {
             InitializeComponent();
             _journalDatabase = journalDatabase;
-            (_folders, _folderDict) = _journalDatabase.SetupChildrenFolders(_journalDatabase.GetAllFolders());
-            FolderView.ItemsSource = _folders;
+            List<JournalTreeItem> treeInput = new List<JournalTreeItem>();
+            treeInput.AddRange(_journalDatabase.GetAllEntries());
+            treeInput.AddRange(_journalDatabase.GetAllFolders());
+
+            (_folderTree, _folderDict) = _journalDatabase.SetupChildrenFolders(treeInput);
+            FolderView.ItemsSource = _folderTree;
         }
 
         private void Submit_Click(object sender, RoutedEventArgs e)
@@ -58,25 +62,42 @@ namespace JournalApp.Views
         {
             Button button = (Button)sender;
 
-            JournalFolder folder = (JournalFolder)button.Tag;
+            JournalTreeItem treeItem = (JournalTreeItem)button.Tag;
 
-            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow("You are about to delete the following folder:", folder.Name);
+            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow("You are about to delete the following folder:", treeItem.Name);
             bool? result = confirmationWindow.ShowDialog();
             if (result == true)
             {
-                _journalDatabase.DeleteFolder(folder.Id);
-                if (folder.ParentFolderId != null)
+                if (treeItem is JournalEntry entry)
                 {
-                    if (_folderDict.TryGetValue(folder.ParentFolderId.Value, out JournalFolder? parent))
+                    _journalDatabase.DeleteEntry(entry.Id);
+                    if (entry.FolderId != null)
                     {
-                        if (parent != null)
+                        if (_folderDict.TryGetValue(entry.FolderId.Value, out JournalFolder? parent))
                         {
-                            parent.Children.Remove(folder);
+                            if (parent != null)
+                            {
+                                parent.Children.Remove(entry);
+                            }
                         }
                     }
-                } else
+                } else if (treeItem is JournalFolder folder)
                 {
-                    _folders.Remove(folder);
+                    _journalDatabase.DeleteFolder(folder.Id);
+                    if (folder.ParentFolderId != null)
+                    {
+                        if (_folderDict.TryGetValue(folder.ParentFolderId.Value, out JournalFolder? parent))
+                        {
+                            if (parent != null)
+                            {
+                                parent.Children.Remove(folder);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _folderTree.Remove(folder);
+                    }
                 }
             }
         }
