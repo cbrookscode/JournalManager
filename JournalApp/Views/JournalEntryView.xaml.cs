@@ -34,6 +34,7 @@ namespace JournalApp.Views
             _journalDatabase = journalDatabase;
             EntryTypeComboBox.ItemsSource = Enum.GetValues<EntryType>();
             EntryTypeComboBox.SelectedItem = EntryType.Daily;
+            FolderTree.Initialize(journalDatabase);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -47,10 +48,17 @@ namespace JournalApp.Views
             JournalEntry NewEntry = new JournalEntry
             {
                 Name = JournalTitle.Text,
+                FolderId = null,
                 EType = (EntryType)EntryTypeComboBox.SelectedItem,
                 Date = date,
                 Notes = JournalNotes.Text
             };
+            JournalTreeItem? treeSelection = FolderTree.SelectedItem;
+            if (treeSelection != null && treeSelection is JournalFolder folder)
+            {
+                NewEntry.FolderId = folder.Id;
+                Debug.WriteLine($"entry parent id: {NewEntry.FolderId}");
+            }
             _journalDatabase.SaveEntry(NewEntry);
             EntrySaved?.Invoke(NewEntry);
         }

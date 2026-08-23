@@ -71,11 +71,12 @@ namespace JournalApp.Data
             SqliteCommand command = _connection.CreateCommand();
             command.CommandText =
                 """
-                INSERT INTO JournalEntries (Title, EntryType, EntryDate, Notes)
-                VALUES($title, $entryType, $entryDate, $notes);
+                INSERT INTO JournalEntries (Title, EntryType, folderId, EntryDate, Notes)
+                VALUES($title, $entryType, $folderId, $entryDate, $notes);
                 """;
             command.Parameters.AddWithValue("$title", journalEntry.Name);
             command.Parameters.AddWithValue("$entryType", (int)journalEntry.EType);
+            command.Parameters.AddWithValue("$folderId", journalEntry.FolderId);
             command.Parameters.AddWithValue("$entryDate", journalEntry.Date.ToString("yyyy-MM-dd"));
             command.Parameters.AddWithValue("notes", journalEntry.Notes);
             command.ExecuteNonQuery();
@@ -117,6 +118,17 @@ namespace JournalApp.Data
                 """;
             command.Parameters.AddWithValue("$id", id);
             using SqliteDataReader reader = command.ExecuteReader();
+        }
+
+        public void DeleteJournalTreeItem(JournalTreeItem journalTreeItem)
+        {
+            if (journalTreeItem is JournalEntry entry)
+            {
+                DeleteEntry(entry.Id);
+            } else if (journalTreeItem is JournalFolder folder)
+            {
+                DeleteFolder(folder.Id);
+            }
         }
 
         public void CreateFolder(JournalFolder folder)
@@ -222,7 +234,7 @@ namespace JournalApp.Data
                         }
                         else
                         {
-                            Debug.WriteLine("Couldnt get value associate with parenfolderid passed in");
+                            Debug.WriteLine("Child folder with missing parent detected.Couldnt get value associate with parenfolderid passed in");
                         }
                     }
                 }
@@ -236,6 +248,10 @@ namespace JournalApp.Data
 
             entry.Id = reader.GetInt32(reader.GetOrdinal("Id"));
             entry.Name = reader.GetString(reader.GetOrdinal("Title")); // get the column position and then get the string stored at the position explicitly 
+            if (!reader.IsDBNull(reader.GetOrdinal("FolderId")))
+            {
+                entry.FolderId = reader.GetInt32(reader.GetOrdinal("FolderId"));
+            }
             entry.EType = (EntryType)reader.GetInt32(reader.GetOrdinal("EntryType")); // convert the stored int value of the enum back to its enum type
             entry.Date = DateOnly.Parse(reader.GetString(reader.GetOrdinal("EntryDate")));
             entry.Notes = reader.GetString(reader.GetOrdinal("Notes"));
@@ -254,7 +270,7 @@ namespace JournalApp.Data
                 folder.ParentFolderId = null;
             } else
             {
-                folder.ParentFolderId = parentFolderOrdinal;
+                folder.ParentFolderId = reader.GetInt32(parentFolderOrdinal);
             }
             return folder;
         }

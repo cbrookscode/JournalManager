@@ -58,7 +58,7 @@ namespace JournalApp.Views
 
             JournalTreeItem treeItem = (JournalTreeItem)button.Tag;
 
-            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow("You are about to delete the following folder:", treeItem.Name);
+            DeleteConfirmationWindow confirmationWindow = new DeleteConfirmationWindow("You are about to delete the following, and if is a folder all nested items:", treeItem.Name);
             bool? result = confirmationWindow.ShowDialog();
             if (result == true)
             {
@@ -78,14 +78,18 @@ namespace JournalApp.Views
                 }
                 else if (treeItem is JournalFolder folder)
                 {
-                    _journalDatabase.DeleteFolder(folder.Id);
+                    _journalDatabase.DeleteFolder(folder.Id); // delete folder
+                    foreach (JournalTreeItem child in folder.Children) // delete children in folder if any
+                    {
+                        _journalDatabase.DeleteJournalTreeItem(child);
+                    }
                     if (folder.ParentFolderId != null)
                     {
                         if (_folderDict.TryGetValue(folder.ParentFolderId.Value, out JournalFolder? parent))
                         {
                             if (parent != null)
                             {
-                                parent.Children.Remove(folder);
+                                parent.Children.Remove(folder); // remove from parent children list if had a parent
                             }
                         }
                     }
