@@ -50,5 +50,13 @@ namespace JournalApp.Views
             }
             DialogResult = true;
         }
+
+        private void Edit_Name(object sender, RoutedEventArgs e)
+        {
+            Button button = (Button)sender;
+
+            JournalTreeItem item = (JournalTreeItem)button.Tag;
+
+        }
     }
 }

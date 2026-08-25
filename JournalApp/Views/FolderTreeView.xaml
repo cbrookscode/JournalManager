@@ -1,32 +1,178 @@
 ﻿<UserControl x:Class="JournalApp.Views.FolderTreeView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:JournalApp.Views"
              xmlns:models="clr-namespace:JournalApp.Models"
-             mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             mc:Ignorable="d"
+             d:DesignHeight="450"
+             d:DesignWidth="800">
+
+    <UserControl.Resources>
+
+        <!-- Normal display text -->
+        <Style x:Key="NormalNameStyle" TargetType="TextBlock">
+            <Setter Property="Visibility" Value="Visible"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="3"/>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Rename textbox -->
+        <Style x:Key="RenameTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Visibility" Value="Collapsed"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="3"/>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Rename Button -->
+        <Style x:Key="RenameButtonStyle" TargetType="Button">
+            <Setter Property="Visibility" Value="Visible"/>
+            
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Cancel Button -->
+        <Style x:Key="CancelButtonStyle" TargetType="Button">
+            <Setter Property="Visibility" Value="Collapsed"/>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Save Button -->
+        <Style x:Key="SaveButtonStyle" TargetType="Button">
+            <Setter Property="Visibility" Value="Collapsed"/>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                    <Setter Property="Visibility" Value="Visible"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+    </UserControl.Resources>
+
     <Grid>
-        <TreeView Grid.Row ="3" x:Name="FolderView">
+
+        <TreeView x:Name="FolderView">
+
             <TreeView.Resources>
-                <HierarchicalDataTemplate DataType="{x:Type models:JournalFolder}" ItemsSource="{Binding Children}">
+
+                <!-- Folder -->
+                <HierarchicalDataTemplate
+                    DataType="{x:Type models:JournalFolder}"
+                    ItemsSource="{Binding Children}">
+
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding Name}" Margin="3" VerticalAlignment="Center"/>
-                        <Button Tag="{Binding}" Click="Delete_Click" Margin="5">
-                            Delete
-                        </Button>
+
+                        <TextBlock
+                            Text="{Binding Name}"
+                            Style="{StaticResource NormalNameStyle}"/>
+
+                        <TextBox
+                            Text="{Binding RenameText, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource RenameTextBoxStyle}"
+                            MinWidth="120"
+                            KeyDown="RenameTextBox_KeyDown"/>
+
+                        <Button
+                            Content="Rename"
+                            Style="{StaticResource RenameButtonStyle}"
+                            Tag="{Binding}"
+                            Click="Rename_Click"
+                            Margin="5"/>
+                        <Button
+                            Content="Cancel"
+                            Style="{StaticResource CancelButtonStyle}"
+                            Tag="{Binding}"
+                            Click="Cancel_Click"
+                            Margin="5"/>
+                        <Button
+                            Content="Save"
+                            Style="{StaticResource SaveButtonStyle}"
+                            Tag="{Binding}"
+                            Click="Save_Click"
+                            Margin="5"/>
+
+                        <Button
+                            Content="Delete"
+                            Tag="{Binding}"
+                            Click="Delete_Click"
+                            Margin="5"/>
+
                     </StackPanel>
+
                 </HierarchicalDataTemplate>
+
+
+                <!-- Journal Entry -->
                 <DataTemplate DataType="{x:Type models:JournalEntry}">
+
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center" Text="{Binding Name, StringFormat=📄{0}}"/>
-                        <Button Tag="{Binding}" Click="Delete_Click" Margin="5">
-                            Delete
-                        </Button>
+
+                        <TextBlock
+                            Text="{Binding Name, StringFormat=📄 {0}}"
+                            Style="{StaticResource NormalNameStyle}"/>
+
+                        <TextBox
+                            Text="{Binding RenameText, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource RenameTextBoxStyle}"
+                            MinWidth="120"
+                            KeyDown="RenameTextBox_KeyDown"/>
+
+                        <Button
+                            Content="Rename"
+                            Style="{StaticResource RenameButtonStyle}"
+                            Tag="{Binding}"
+                            Click="Rename_Click"
+                            Margin="5"/>
+                        <Button
+                            Content="Cancel"
+                            Style="{StaticResource CancelButtonStyle}"
+                            Tag="{Binding}"
+                            Click="Cancel_Click"
+                            Margin="5"/>
+                        <Button
+                            Content="Save"
+                            Style="{StaticResource SaveButtonStyle}"
+                            Tag="{Binding}"
+                            Click="Save_Click"
+                            Margin="5"/>
+
+                        <Button
+                            Content="Delete"
+                            Tag="{Binding}"
+                            Click="Delete_Click"
+                            Margin="5"/>
+
                     </StackPanel>
+
                 </DataTemplate>
+
             </TreeView.Resources>
+
         </TreeView>
+
     </Grid>
+
 </UserControl>

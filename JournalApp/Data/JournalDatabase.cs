@@ -71,16 +71,72 @@ namespace JournalApp.Data
             SqliteCommand command = _connection.CreateCommand();
             command.CommandText =
                 """
-                INSERT INTO JournalEntries (Title, EntryType, folderId, EntryDate, Notes)
+                INSERT INTO JournalEntries (Title, EntryType, FolderId, EntryDate, Notes)
                 VALUES($title, $entryType, $folderId, $entryDate, $notes);
                 """;
             command.Parameters.AddWithValue("$title", journalEntry.Name);
             command.Parameters.AddWithValue("$entryType", (int)journalEntry.EType);
-            command.Parameters.AddWithValue("$folderId", journalEntry.FolderId);
-            command.Parameters.AddWithValue("$entryDate", journalEntry.Date.ToString("yyyy-MM-dd"));
-            command.Parameters.AddWithValue("notes", journalEntry.Notes);
+            if (journalEntry.FolderId == null)
+            {
+                command.Parameters.AddWithValue("$folderId", DBNull.Value);
+            } else
+            {
+                command.Parameters.AddWithValue("$folderId", journalEntry.FolderId);
+            }
+                command.Parameters.AddWithValue("$entryDate", journalEntry.Date.ToString("yyyy-MM-dd"));
+            command.Parameters.AddWithValue("$notes", journalEntry.Notes);
             command.ExecuteNonQuery();
-            _connection.Close();
+        }
+
+        private bool EditEntry(JournalEntry journalEntry)
+        {
+            using SqliteConnection _connection =
+                new SqliteConnection($"Data Source={_databasePath}"); // creates db if it doesn't exist based source provided
+
+            _connection.Open();
+            using SqliteTransaction transaction = _connection.BeginTransaction();
+            try
+            {
+                SqliteCommand command = _connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText =
+                    """
+                    UPDATE JournalEntries
+                    SET
+                        Title = $title,
+                        EntryType = $entryType,
+                        EntryDate = $entryDate,
+                        Notes = $notes,
+                        FolderId = $folderId
+                    WHERE Id = $id;
+                    """;
+                command.Parameters.AddWithValue("$title", journalEntry.Name);
+                command.Parameters.AddWithValue("$entryType", (int)journalEntry.EType);
+                command.Parameters.AddWithValue("$id", journalEntry.Id);
+                if (journalEntry.FolderId == null)
+                {
+                    command.Parameters.AddWithValue("$folderId", DBNull.Value);
+                }
+                else
+                {
+                    command.Parameters.AddWithValue("$folderId", journalEntry.FolderId);
+                }
+                command.Parameters.AddWithValue("$entryDate", journalEntry.Date.ToString("yyyy-MM-dd"));
+                command.Parameters.AddWithValue("$notes", journalEntry.Notes);
+
+                int rowsAffected = command.ExecuteNonQuery();
+                if (rowsAffected != 1)
+                {
+                    transaction.Rollback();
+                    return false;
+                }
+                transaction.Commit();
+                return true;
+            } catch
+            {
+                transaction.Rollback();
+                return false;
+            }
         }
 
         public List<JournalEntry> GetAllEntries()
@@ -131,6 +187,20 @@ namespace JournalApp.Data
             }
         }
 
+        public bool EditJournalTreeItem(JournalTreeItem journalTreeItem)
+        {
+            if (journalTreeItem is JournalEntry entry)
+            {
+                return EditEntry(entry);
+            }
+
+            if (journalTreeItem is JournalFolder folder)
+            {
+                return EditFolder(folder);
+            }
+            return false;
+        }
+
         public void CreateFolder(JournalFolder folder)
         {
             using SqliteConnection _connection = new SqliteConnection($"Data Source = {_databasePath}");
@@ -150,7 +220,50 @@ namespace JournalApp.Data
                 command.Parameters.AddWithValue("$parentFolderId", DBNull.Value);
             }
             command.ExecuteNonQuery();
-            _connection.Close();
+        }
+
+        private bool EditFolder(JournalFolder folder)
+        {
+            using SqliteConnection _connection = new SqliteConnection($"Data Source = {_databasePath}");
+            _connection.Open();
+            using SqliteTransaction transaction = _connection.BeginTransaction();
+            try
+            {
+                SqliteCommand command = _connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText =
+                    """
+                    UPDATE JournalFolders
+                    SET
+                        Name = $name,
+                        ParentFolderId = $parentFolderId
+                    WHERE Id = $id;
+                    """;
+                command.Parameters.AddWithValue("$name", folder.Name);
+                if (folder.ParentFolderId != null)
+                {
+                    command.Parameters.AddWithValue("$parentFolderId", folder.ParentFolderId);
+                }
+                else
+                {
+                    command.Parameters.AddWithValue("$parentFolderId", DBNull.Value);
+                }
+                command.Parameters.AddWithValue("$id", folder.Id);
+                int rowsAffected = command.ExecuteNonQuery();
+
+                if (rowsAffected != 1)
+                {
+                    transaction.Rollback();
+                    return false;
+                }
+
+                transaction.Commit();
+                return true;
+            } catch
+            {
+                transaction.Rollback();
+                return false;
+            }
         }
 
         public void DeleteFolder(int id)
