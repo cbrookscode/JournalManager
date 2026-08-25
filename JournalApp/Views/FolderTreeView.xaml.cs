@@ -97,6 +97,11 @@ namespace JournalApp.Views
             SaveRename(treeItem);
         }
 
+        public void EditEntry_Click(object sender, RoutedEventArgs e)
+        {
+            // open new window that contains edit entry view
+        }
+
         private void RenameTextBox_KeyDown(object sender, KeyEventArgs e)
         {
             if (sender is not TextBox textBox)

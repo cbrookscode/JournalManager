@@ -47,6 +47,17 @@
                 </DataTrigger>
             </Style.Triggers>
         </Style>
+        
+        <!-- Edit Entry Button -->
+        <Style x:Key="EditEntryButtonStyle" TargetType="Button">
+            <Setter Property="Visibility" Value="Visible"/>
+
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsRenaming}" Value="True">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
 
         <!-- Cancel Button -->
         <Style x:Key="CancelButtonStyle" TargetType="Button">
@@ -145,6 +156,12 @@
                             Style="{StaticResource RenameButtonStyle}"
                             Tag="{Binding}"
                             Click="Rename_Click"
+                            Margin="5"/>
+                        <Button
+                            Content="Edit Entry"
+                            Style="{StaticResource EditEntryButtonStyle}"
+                            Tag="{Binding}"
+                            Click="EditEntry_Click"
                             Margin="5"/>
                         <Button
                             Content="Cancel"
