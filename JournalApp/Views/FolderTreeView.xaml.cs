@@ -73,11 +73,6 @@ namespace JournalApp.Views
 
         public void MoveEntry(JournalEntry entry, int? oldFolderId)
         {
-            if (entry == null)
-            {
-                return;
-            }
-
             if (!_entryDict.TryGetValue(entry.Id, out JournalEntry? treeEntry))
             {
                 return;
@@ -113,6 +108,46 @@ namespace JournalApp.Views
             treeEntry.EType = entry.EType;
             treeEntry.Date = entry.Date;
             treeEntry.Notes = entry.Notes;
+        }
+
+        public void DeleteTreeEntry(JournalEntry entry)
+        {
+            if (!_entryDict.TryGetValue(entry.Id, out JournalEntry? treeEntry))
+            {
+                return;
+            }
+
+            if (treeEntry.FolderId == null)
+            {
+                _folderTree.Remove(treeEntry);
+            } else
+            {
+                _entryDict.Remove(treeEntry.Id);
+                _folderDict[treeEntry.FolderId.Value].Children.Remove(treeEntry);
+            }
+            _entryDict.Remove(treeEntry.Id);
+        }
+
+        public void DeleteTreeFolder(JournalFolder folder)
+        {
+            foreach (JournalTreeItem child in folder.Children) // delete children in folder if any
+            {
+                _journalDatabase.DeleteJournalTreeItem(child);
+            }
+            if (folder.ParentFolderId != null)
+            {
+                if (_folderDict.TryGetValue(folder.ParentFolderId.Value, out JournalFolder? parent))
+                {
+                    if (parent != null)
+                    {
+                        parent.Children.Remove(folder); // remove from parent children list if had a parent
+                    }
+                }
+            }
+            else
+            {
+                _folderTree.Remove(folder);
+            }
         }
         public void Rename_Click(object sender, RoutedEventArgs e)
         {
@@ -225,38 +260,12 @@ namespace JournalApp.Views
                 if (treeItem is JournalEntry entry)
                 {
                     _journalDatabase.DeleteEntry(entry.Id);
-                    if (entry.FolderId != null)
-                    {
-                        if (_folderDict.TryGetValue(entry.FolderId.Value, out JournalFolder? parent))
-                        {
-                            if (parent != null)
-                            {
-                                parent.Children.Remove(entry);
-                            }
-                        }
-                    }
+                    DeleteTreeEntry(entry);
                 }
                 else if (treeItem is JournalFolder folder)
                 {
                     _journalDatabase.DeleteFolder(folder.Id); // delete folder
-                    foreach (JournalTreeItem child in folder.Children) // delete children in folder if any
-                    {
-                        _journalDatabase.DeleteJournalTreeItem(child);
-                    }
-                    if (folder.ParentFolderId != null)
-                    {
-                        if (_folderDict.TryGetValue(folder.ParentFolderId.Value, out JournalFolder? parent))
-                        {
-                            if (parent != null)
-                            {
-                                parent.Children.Remove(folder); // remove from parent children list if had a parent
-                            }
-                        }
-                    }
-                    else
-                    {
-                        _folderTree.Remove(folder);
-                    }
+                    DeleteTreeFolder(folder);
                 }
             }
         }
