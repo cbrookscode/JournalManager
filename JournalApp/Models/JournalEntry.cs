@@ -5,7 +5,7 @@ namespace JournalApp.Models
 {
     public class JournalEntry : JournalTreeItem
     {
-        public int? FolderId { get; set; }
+        private int? _folderId;
         private EntryType _eType;
         private DateOnly _date;
         private string _notes  = "";
@@ -43,6 +43,19 @@ namespace JournalApp.Models
                 if (_notes != value)
                 {
                     _notes = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public int? FolderId
+        {
+            get => _folderId;
+            set
+            {
+                if (_folderId != value)
+                {
+                    _folderId = value;
                     OnPropertyChanged();
                 }
             }

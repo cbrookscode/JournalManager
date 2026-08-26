@@ -36,6 +36,7 @@ namespace JournalApp.Views
         private JournalDatabase _journalDatabase;
         private ObservableCollection<JournalTreeItem> _folderTree;
         private Dictionary<int, JournalFolder> _folderDict;
+        private Dictionary<int, JournalEntry> _entryDict;
 
         public FolderTreeView()
         {
@@ -49,10 +50,70 @@ namespace JournalApp.Views
             treeInput.AddRange(_journalDatabase.GetAllEntries());
             treeInput.AddRange(_journalDatabase.GetAllFolders());
 
-            (_folderTree, _folderDict) = _journalDatabase.SetupChildrenFolders(treeInput);
+            (_folderTree, _folderDict, _entryDict) = _journalDatabase.SetupChildrenFolders(treeInput);
             FolderView.ItemsSource = _folderTree;
         }
 
+        public void SelectFolderById(int? folderId)
+        {
+            if (folderId == null)
+            {
+                return;
+            }
+
+            if (_folderDict.TryGetValue(folderId.Value, out JournalFolder? folder))
+            {
+                TreeViewItem? item = FolderView.ItemContainerGenerator.ContainerFromItem(folder) as TreeViewItem;
+                if (item != null)
+                {
+                    item.IsSelected = true;
+                }
+            }
+        }
+
+        public void MoveEntry(JournalEntry entry, int? oldFolderId)
+        {
+            if (entry == null)
+            {
+                return;
+            }
+
+            if (!_entryDict.TryGetValue(entry.Id, out JournalEntry? treeEntry))
+            {
+                return;
+            }
+
+            if (oldFolderId == null)
+            {
+                _folderTree.Remove(treeEntry);
+            } else
+            {
+                _folderDict[oldFolderId.Value].Children.Remove(treeEntry);
+            }
+
+            if (entry.FolderId == null)
+            {
+                // moving to the root
+                int insertIndex = 0;
+
+                while (insertIndex < _folderTree.Count &&
+                       _folderTree[insertIndex] is JournalEntry)
+                {
+                    insertIndex++;
+                }
+
+                _folderTree.Insert(insertIndex, treeEntry);
+            } else
+            {
+                _folderDict[entry.FolderId.Value].Children.Add(treeEntry);
+            }
+
+            treeEntry.Name = entry.Name;
+            treeEntry.FolderId = entry.FolderId;
+            treeEntry.EType = entry.EType;
+            treeEntry.Date = entry.Date;
+            treeEntry.Notes = entry.Notes;
+        }
         public void Rename_Click(object sender, RoutedEventArgs e)
         {
             Button button = (Button)sender;
@@ -99,7 +160,19 @@ namespace JournalApp.Views
 
         public void EditEntry_Click(object sender, RoutedEventArgs e)
         {
-            // open new window that contains edit entry view
+            AddEntryWindow addEntryWindow = new AddEntryWindow();
+            Button button = (Button)sender;
+            JournalTreeItem treeItem = (JournalTreeItem)button.Tag;
+            if (treeItem is JournalEntry entry)
+            {
+                addEntryWindow.Initialize(_journalDatabase, entry);
+                addEntryWindow.EntrySaved += (savedEntry, oldFolderId) =>
+                {
+                    MoveEntry(savedEntry, oldFolderId);
+                };
+
+                bool? result = addEntryWindow.ShowDialog();
+            }
         }
 
         private void RenameTextBox_KeyDown(object sender, KeyEventArgs e)

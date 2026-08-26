@@ -51,7 +51,8 @@ namespace JournalApp
         }
         private void ShowEntryView()
         {
-            JournalEntryView journalEntryView = new JournalEntryView(_journalDatabase);
+            JournalEntryView journalEntryView = new JournalEntryView();
+            journalEntryView.Initialize(_journalDatabase);
             journalEntryView.EntrySaved += HandleEntrySaved;
             MainContent.Content = journalEntryView;
         }
@@ -66,7 +67,7 @@ namespace JournalApp
         /// Handler for event subscription to EntrySaved when creating a new JournalEntryView
         /// </summary>
         /// <param name="journalEntry"></param>
-        private void HandleEntrySaved(JournalEntry journalEntry)
+        private void HandleEntrySaved(JournalEntry journalEntry, int? oldFolderId)
         {
             ShowHistoryView();
         }

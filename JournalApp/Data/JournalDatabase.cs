@@ -302,10 +302,11 @@ namespace JournalApp.Data
             return journalFolders;
         }
 
-        public (ObservableCollection<JournalTreeItem>, Dictionary<int, JournalFolder>) SetupChildrenFolders(List<JournalTreeItem> tree)
+        public (ObservableCollection<JournalTreeItem>, Dictionary<int, JournalFolder>, Dictionary<int, JournalEntry>) SetupChildrenFolders(List<JournalTreeItem> tree)
         {
             ObservableCollection<JournalTreeItem> finalList = new ObservableCollection<JournalTreeItem>();
             Dictionary<int, JournalFolder> folderDict = new Dictionary<int, JournalFolder>();
+            Dictionary<int, JournalEntry> entryDict = new Dictionary<int, JournalEntry>();
 
             foreach (JournalTreeItem treeItem in tree)
             {
@@ -314,6 +315,7 @@ namespace JournalApp.Data
                     if (entry.FolderId == null)
                     {
                         finalList.Add(entry);
+                        entryDict[entry.Id] = entry;
                     }
                 } else if (treeItem is JournalFolder folder)
                 {
@@ -352,7 +354,7 @@ namespace JournalApp.Data
                     }
                 }
             }
-            return (finalList, folderDict);
+            return (finalList, folderDict, entryDict);
         }
         private JournalEntry ConvertToJournalEntry(SqliteDataReader reader)
         {

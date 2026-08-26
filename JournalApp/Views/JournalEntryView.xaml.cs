@@ -23,14 +23,18 @@ namespace JournalApp.Views
     /// </summary>
     public partial class JournalEntryView : UserControl
     {
-        public event Action<JournalEntry>? EntrySaved;
+        public event Action<JournalEntry, int?>? EntrySaved;
 
         private JournalDatabase _journalDatabase;
+        private JournalEntry? _editingeEntry;
 
-        public JournalEntryView(JournalDatabase journalDatabase)
+        public JournalEntryView()
         {
             InitializeComponent();
+        }
 
+        public void Initialize(JournalDatabase journalDatabase)
+        {
             _journalDatabase = journalDatabase;
             EntryTypeComboBox.ItemsSource = Enum.GetValues<EntryType>();
             EntryTypeComboBox.SelectedItem = EntryType.Daily;
@@ -38,6 +42,21 @@ namespace JournalApp.Views
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+            if (_editingeEntry == null)
+            {
+                Debug.WriteLine("Editing entry is null");
+                SaveNewEntry();
+            } else
+            {
+                Debug.WriteLine("Editing entry is not null");
+                SaveEditedEntry(_editingeEntry.Id);
+            }
+            
+        }
+
+        private void SaveNewEntry()
         {
             DateOnly date = DateOnly.FromDateTime(DateTime.Now);
             if (EntryDate.SelectedDate != null)
@@ -53,14 +72,57 @@ namespace JournalApp.Views
                 Date = date,
                 Notes = JournalNotes.Text
             };
-            JournalTreeItem? treeSelection = FolderTree.SelectedItem;
-            if (treeSelection != null && treeSelection is JournalFolder folder)
+
+            if (FolderTree.SelectedItem is JournalFolder folder)
             {
                 NewEntry.FolderId = folder.Id;
-                Debug.WriteLine($"entry parent id: {NewEntry.FolderId}");
             }
             _journalDatabase.SaveEntry(NewEntry);
-            EntrySaved?.Invoke(NewEntry);
+            EntrySaved?.Invoke(NewEntry, null);
+        }
+
+        private void SaveEditedEntry(int Id)
+        {
+            int? oldFolderId = _editingeEntry.FolderId;
+
+            DateOnly date = DateOnly.FromDateTime(DateTime.Now);
+            if (EntryDate.SelectedDate != null)
+            {
+                date = DateOnly.FromDateTime((DateTime)EntryDate.SelectedDate);
+            }
+
+            _editingeEntry.Name = JournalTitle.Text;
+            _editingeEntry.EType = (EntryType)EntryTypeComboBox.SelectedItem;
+            _editingeEntry.Date = date;
+            _editingeEntry.Notes = JournalNotes.Text;
+
+            int? newFolderId = null;
+            if (FolderTree.SelectedItem is JournalFolder folder)
+            {
+                newFolderId = folder.Id;
+            }
+            _editingeEntry.FolderId = newFolderId;
+
+            bool success = _journalDatabase.EditJournalTreeItem(_editingeEntry);
+            if (success)
+            {
+                EntrySaved?.Invoke(_editingeEntry, oldFolderId);
+            } else
+            {
+                Debug.WriteLine("failed to edit entry");
+            }
+            _editingeEntry = null;
+        }
+
+        public void LoadEntry(JournalEntry journalEntry)
+        {
+            _editingeEntry = journalEntry;
+
+            JournalTitle.Text = journalEntry.Name;
+            EntryDate.SelectedDate = journalEntry.Date.ToDateTime(TimeOnly.MinValue);
+            JournalNotes.Text = journalEntry.Notes;
+            EntryTypeComboBox.SelectedItem = journalEntry.EType;
+            FolderTree.SelectFolderById(journalEntry.FolderId);
         }
     }
 }
