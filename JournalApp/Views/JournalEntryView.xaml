@@ -43,9 +43,27 @@
             >
             </ComboBox>
         </Grid>
-        <Expander Grid.Row="1">
-            <views:FolderTreeView  x:Name="FolderTree"/>
-        </Expander>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="auto"/>
+            </Grid.ColumnDefinitions>
+            <Expander x:Name="FolderExpander" Grid.Column="0" Margin="10,5,5,5">
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="SelectedFolderText" Text="No Folder Selected" VerticalAlignment="Center" Margin="5"/>
+                        <Button Content="Clear" 
+                            Click="Clear_Selection" 
+                            Grid.Column="1" 
+                            Padding="3" 
+                            VerticalAlignment="Top"
+                            HorizontalAlignment="Right" 
+                            Margin="5, 5, 10,5"/>
+                    </StackPanel>
+                </Expander.Header>
+                <views:FolderTreeView  x:Name="FolderTree"/>
+            </Expander>
+        </Grid>
         <TextBox 
             Grid.Row="2"
             Name="JournalNotes"

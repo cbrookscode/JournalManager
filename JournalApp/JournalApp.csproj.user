@@ -5,9 +5,6 @@
     <Compile Update="Views\AddEntryWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Views\AddFolderWindow.xaml.cs">
-      <SubType>Code</SubType>
-    </Compile>
     <Compile Update="Views\DeleteConfirmationWindow.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -1,4 +1,5 @@
 ﻿using JournalApp.Data;
+using JournalApp.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,26 +22,39 @@ namespace JournalApp.Views
     /// </summary>
     public partial class JournalExplorerView : UserControl
     {
+        public JournalFolder CreatedFolder { get; set; } = new JournalFolder();
         private JournalDatabase _journalDatabase;
         public JournalExplorerView(JournalDatabase journalDatabase)
         {
             InitializeComponent();
             _journalDatabase = journalDatabase;
+            FolderTree.Initialize(journalDatabase);
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            ShowAddFolderWindow();
+            if (string.IsNullOrWhiteSpace(FolderName.Text))
+            {
+                return;
+            }
+
+            CreatedFolder.Name = FolderName.Text;
+            CreatedFolder.ParentFolderId = null;
+
+            if (FolderTree.SelectedItem is JournalFolder selectedFolder)
+            {
+                CreatedFolder.ParentFolderId = selectedFolder.Id;
+            }
+            _journalDatabase.CreateFolder(CreatedFolder);
+            FolderName.Text = "";
+            CreatedFolder = new JournalFolder();
         }
 
-        private void ShowAddFolderWindow()
+        private void Edit_Name(object sender, RoutedEventArgs e)
         {
-            AddFolderWindow addFolderWindow = new AddFolderWindow(_journalDatabase);
-            bool? result = addFolderWindow.ShowDialog();
-            if (result == true)
-            {
-                _journalDatabase.CreateFolder(addFolderWindow.CreatedFolder); // is the folder that was created by the window, need to add to database
-            }
+            Button button = (Button)sender;
+
+            JournalTreeItem item = (JournalTreeItem)button.Tag;
         }
     }
 }

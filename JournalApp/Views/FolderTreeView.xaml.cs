@@ -23,6 +23,7 @@ namespace JournalApp.Views
     /// </summary>
     public partial class FolderTreeView : UserControl
     {
+        public event Action<JournalFolder?>? FolderSelected;
         public IEnumerable? ItemsSource
         {
             get => FolderView.ItemsSource;
@@ -51,6 +52,7 @@ namespace JournalApp.Views
             treeInput.AddRange(_journalDatabase.GetAllFolders());
 
             (_folderTree, _folderDict, _entryDict) = _journalDatabase.SetupChildrenFolders(treeInput);
+            _journalDatabase.TreeItemCreated += HandleTreeItemCreated;
             FolderView.ItemsSource = _folderTree;
         }
 
@@ -68,6 +70,22 @@ namespace JournalApp.Views
                 {
                     item.IsSelected = true;
                 }
+            }
+        }
+
+        public void ClearSelection()
+        {
+            if (SelectedItem != null)
+            {
+                if (_folderDict.TryGetValue(SelectedItem.Id, out JournalFolder? folder))
+                {
+                    TreeViewItem? item = FolderView.ItemContainerGenerator.ContainerFromItem(folder) as TreeViewItem;
+                    if (item != null)
+                    {
+                        item.IsSelected = false;
+                    }
+                }
+
             }
         }
 
@@ -266,6 +284,57 @@ namespace JournalApp.Views
                 {
                     _journalDatabase.DeleteFolder(folder.Id); // delete folder
                     DeleteTreeFolder(folder);
+                }
+            }
+        }
+
+        public void FolderView_SelectedItemChanged(object sender, RoutedEventArgs e)
+        {
+            if (FolderView.SelectedItem is JournalFolder folder)
+            {
+                FolderSelected?.Invoke(folder);
+            } else
+            {
+                FolderSelected?.Invoke(null);
+            }
+        }
+
+        private void HandleTreeItemCreated(JournalTreeItem treeItem)
+        {
+            if (treeItem is JournalEntry treeEntry)
+            {
+                _entryDict[treeEntry.Id] = treeEntry;
+                if (treeEntry.FolderId == null)
+                {
+                    int insertIndex = 0;
+
+                    while (insertIndex < _folderTree.Count &&
+                           _folderTree[insertIndex] is JournalEntry)
+                    {
+                        insertIndex++;
+                    }
+
+                    _folderTree.Insert(insertIndex, treeEntry);
+                } else
+                {
+                    int insertIndex = 0;
+
+                    while (insertIndex < _folderDict[treeEntry.FolderId.Value].Children.Count &&
+                           _folderDict[treeEntry.FolderId.Value].Children[insertIndex] is JournalEntry)
+                    {
+                        insertIndex++;
+                    }
+                    _folderDict[treeEntry.FolderId.Value].Children.Insert(insertIndex, treeEntry);
+                }
+            } else if (treeItem is JournalFolder treeFolder)
+            {
+                _folderDict[treeFolder.Id] = treeFolder;
+                if (treeFolder.ParentFolderId == null)
+                {
+                    _folderTree.Add(treeFolder);
+                } else
+                {
+                    _folderDict[treeFolder.ParentFolderId.Value].Children.Add(treeFolder);
                 }
             }
         }

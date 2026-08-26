@@ -39,6 +39,20 @@ namespace JournalApp.Views
             EntryTypeComboBox.ItemsSource = Enum.GetValues<EntryType>();
             EntryTypeComboBox.SelectedItem = EntryType.Daily;
             FolderTree.Initialize(journalDatabase);
+            FolderTree.FolderSelected += (folder) =>
+            {
+                SelectedFolderText.Text =
+                    folder == null
+                        ? "No Folder Selected"
+                        : folder.Name;
+            };
+            FolderExpander.LostKeyboardFocus += (_, _) =>
+            {
+                if (!FolderExpander.IsKeyboardFocusWithin)
+                {
+                    FolderExpander.IsExpanded = false;
+                }
+            };
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -123,6 +137,11 @@ namespace JournalApp.Views
             JournalNotes.Text = journalEntry.Notes;
             EntryTypeComboBox.SelectedItem = journalEntry.EType;
             FolderTree.SelectFolderById(journalEntry.FolderId);
+        }
+
+        private void Clear_Selection(object sender, RoutedEventArgs e)
+        {
+            FolderTree.ClearSelection();
         }
     }
 }

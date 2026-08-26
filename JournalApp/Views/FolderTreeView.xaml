@@ -85,7 +85,7 @@
 
     <Grid>
 
-        <TreeView x:Name="FolderView">
+        <TreeView x:Name="FolderView" SelectedItemChanged="FolderView_SelectedItemChanged">
 
             <TreeView.Resources>
 

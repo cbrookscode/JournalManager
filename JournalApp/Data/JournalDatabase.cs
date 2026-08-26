@@ -10,6 +10,7 @@ namespace JournalApp.Data
 {
     public class JournalDatabase
     {
+        public event Action<JournalTreeItem> TreeItemCreated;
         private string _localAppDatapath;
         private string _appDataDirectory;
         private string _databasePath;
@@ -86,6 +87,7 @@ namespace JournalApp.Data
                 command.Parameters.AddWithValue("$entryDate", journalEntry.Date.ToString("yyyy-MM-dd"));
             command.Parameters.AddWithValue("$notes", journalEntry.Notes);
             command.ExecuteNonQuery();
+            TreeItemCreated?.Invoke(journalEntry);
         }
 
         private bool EditEntry(JournalEntry journalEntry)
@@ -209,7 +211,8 @@ namespace JournalApp.Data
             command.CommandText =
                 """
                 INSERT INTO JournalFolders (Name, ParentFolderId)
-                VALUES ($name, $parentFolderId);
+                VALUES ($name, $parentFolderId)
+                RETURNING Id;
                 """;
             command.Parameters.AddWithValue("$name", folder.Name );
             if (folder.ParentFolderId != null)
@@ -219,7 +222,11 @@ namespace JournalApp.Data
             {
                 command.Parameters.AddWithValue("$parentFolderId", DBNull.Value);
             }
-            command.ExecuteNonQuery();
+            long newId = (long)command.ExecuteScalar()!;
+
+            folder.Id = (int)newId;
+            TreeItemCreated?.Invoke(folder);
+            Debug.WriteLine($"folder id is: {folder.Id}");
         }
 
         private bool EditFolder(JournalFolder folder)
