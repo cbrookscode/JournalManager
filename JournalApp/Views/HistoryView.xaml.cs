@@ -40,14 +40,17 @@ namespace JournalApp.Views
             bool? result = confirmationWindow.ShowDialog();
             if (result == true)
             {
-                _journalDatabase.DeleteEntry(entry.Id);
-                RefreshEntries();
+                bool success = _journalDatabase.DeleteEntry(entry.Id);
+                if (success)
+                {
+                    RefreshEntries();
+                }
             }
         }
 
         private void RefreshEntries()
         {
-            HistoryItems.ItemsSource = _journalDatabase.GetAllEntries();
+            (bool success, HistoryItems.ItemsSource) = _journalDatabase.GetAllEntries();
         }
     }
 }

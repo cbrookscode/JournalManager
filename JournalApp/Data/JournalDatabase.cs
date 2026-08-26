@@ -1,6 +1,9 @@
 using JournalApp.Models;
 using Microsoft.Data.Sqlite;
+using Microsoft.VisualBasic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Data.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Controls;
@@ -11,6 +14,8 @@ namespace JournalApp.Data
     public class JournalDatabase
     {
         public event Action<JournalTreeItem> TreeItemCreated;
+        public event Action<JournalTreeItem> TreeItemEdited;
+        public event Action<JournalTreeItem> TreeItemDeleted;
         private string _localAppDatapath;
         private string _appDataDirectory;
         private string _databasePath;
@@ -63,31 +68,48 @@ namespace JournalApp.Data
             }
         }
 
-        public void SaveEntry(JournalEntry journalEntry)
+        public bool SaveEntry(JournalEntry journalEntry)
         {
             using SqliteConnection _connection = 
                 new SqliteConnection($"Data Source={_databasePath}"); // creates db if it doesn't exist based source provided
 
             _connection.Open();
-            SqliteCommand command = _connection.CreateCommand();
-            command.CommandText =
-                """
+            using SqliteTransaction transaction = _connection.BeginTransaction();
+            try
+            {
+                SqliteCommand command = _connection.CreateCommand();
+                command.CommandText =
+                    """
                 INSERT INTO JournalEntries (Title, EntryType, FolderId, EntryDate, Notes)
                 VALUES($title, $entryType, $folderId, $entryDate, $notes);
                 """;
-            command.Parameters.AddWithValue("$title", journalEntry.Name);
-            command.Parameters.AddWithValue("$entryType", (int)journalEntry.EType);
-            if (journalEntry.FolderId == null)
-            {
-                command.Parameters.AddWithValue("$folderId", DBNull.Value);
-            } else
-            {
-                command.Parameters.AddWithValue("$folderId", journalEntry.FolderId);
-            }
+                command.Parameters.AddWithValue("$title", journalEntry.Name);
+                command.Parameters.AddWithValue("$entryType", (int)journalEntry.EType);
+                if (journalEntry.FolderId == null)
+                {
+                    command.Parameters.AddWithValue("$folderId", DBNull.Value);
+                }
+                else
+                {
+                    command.Parameters.AddWithValue("$folderId", journalEntry.FolderId);
+                }
                 command.Parameters.AddWithValue("$entryDate", journalEntry.Date.ToString("yyyy-MM-dd"));
-            command.Parameters.AddWithValue("$notes", journalEntry.Notes);
-            command.ExecuteNonQuery();
-            TreeItemCreated?.Invoke(journalEntry);
+                command.Parameters.AddWithValue("$notes", journalEntry.Notes);
+                object? result = command.ExecuteScalar();
+                if (result != null)
+                {
+                    transaction.Rollback();
+                    return false;
+                }
+                journalEntry.Id = Convert.ToInt32(result);
+                transaction.Commit();
+                TreeItemCreated?.Invoke(journalEntry);
+                return true;
+            } catch
+            {
+                transaction.Rollback();
+                return false;
+            }
         }
 
         private bool EditEntry(JournalEntry journalEntry)
@@ -133,6 +155,7 @@ namespace JournalApp.Data
                     return false;
                 }
                 transaction.Commit();
+                TreeItemEdited?.Invoke(journalEntry);
                 return true;
             } catch
             {
@@ -141,41 +164,63 @@ namespace JournalApp.Data
             }
         }
 
-        public List<JournalEntry> GetAllEntries()
+        public (bool, List<JournalEntry>) GetAllEntries()
         {
             using SqliteConnection connection =
                 new SqliteConnection($"Data Source={_databasePath}");
 
             connection.Open();
-            SqliteCommand command = connection.CreateCommand();
-            command.CommandText =
-                """
-                SELECT * FROM JournalEntries;
-                """;
-            using SqliteDataReader reader = command.ExecuteReader();
-
-            List<JournalEntry> entries = new List<JournalEntry>();
-            while (reader.Read())
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
             {
-                JournalEntry entry = ConvertToJournalEntry(reader);
-                entries.Add(entry);
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText =
+                    """
+                    SELECT * FROM JournalEntries;
+                    """;
+                using SqliteDataReader reader = command.ExecuteReader();
+
+                List<JournalEntry> entries = new List<JournalEntry>();
+                while (reader.Read())
+                {
+                    JournalEntry entry = ConvertToJournalEntry(reader);
+                    entries.Add(entry);
+                }
+                transaction.Commit();
+                return (true, entries);
+            } catch
+            {
+                transaction.Rollback();
+                Debug.WriteLine("Issue getting all entries from DB");
+                List<JournalEntry> empty = new();
+                return (false, empty);
             }
-            return entries;
         }
-        public void DeleteEntry(int id)
+        public bool DeleteEntry(int id)
         {
             using SqliteConnection connection =
                 new SqliteConnection($"Data Source={_databasePath}");
-
             connection.Open();
-            SqliteCommand command = connection.CreateCommand();
-            command.CommandText =
-                """
-                DELETE FROM JournalEntries
-                WHERE Id = $id;
-                """;
-            command.Parameters.AddWithValue("$id", id);
-            using SqliteDataReader reader = command.ExecuteReader();
+            using SqliteTransaction transaction = connection.BeginTransaction();
+            try
+            {
+                SqliteCommand command = connection.CreateCommand();
+                command.CommandText =
+                    """
+                    DELETE FROM JournalEntries
+                    WHERE Id = $id;
+                    """;
+                command.Parameters.AddWithValue("$id", id);
+                using SqliteDataReader reader = command.ExecuteReader();
+                transaction.Commit();
+                return true;
+            }
+            catch
+            {
+                Debug.WriteLine("issue deleting entry from DB");
+                transaction.Rollback();
+                return false;
+            }
         }
 
         public void DeleteJournalTreeItem(JournalTreeItem journalTreeItem)
@@ -289,24 +334,35 @@ namespace JournalApp.Data
             using SqliteDataReader reader = command.ExecuteReader();
         }
 
-        public List<JournalFolder> GetAllFolders()
+        public (bool, List<JournalFolder>) GetAllFolders()
         {
             using SqliteConnection _connection = new SqliteConnection($"Data Source = {_databasePath}");
             _connection.Open();
-            SqliteCommand command = _connection.CreateCommand();
-            command.CommandText =
-                """
+            using SqliteTransaction transaction = _connection.BeginTransaction();
+            try
+            {
+                SqliteCommand command = _connection.CreateCommand();
+                command.CommandText =
+                    """
                 SELECT * FROM JournalFolders;
                 """;
-            using SqliteDataReader reader = command.ExecuteReader();
+                using SqliteDataReader reader = command.ExecuteReader();
 
-            List<JournalFolder> journalFolders = new List<JournalFolder>();
-            while (reader.Read())
+                List<JournalFolder> journalFolders = new List<JournalFolder>();
+                while (reader.Read())
+                {
+                    JournalFolder folder = ConverToJournalFolder(reader);
+                    journalFolders.Add(folder);
+                }
+                transaction.Commit();
+                return (true, journalFolders);
+            } catch
             {
-                JournalFolder folder = ConverToJournalFolder(reader);
-                journalFolders.Add(folder);
+                transaction.Rollback();
+                Debug.WriteLine("issue grabbing all folders from db");
+                List<JournalFolder> empty = new();
+                return (false, empty);
             }
-            return journalFolders;
         }
 
         public (ObservableCollection<JournalTreeItem>, Dictionary<int, JournalFolder>, Dictionary<int, JournalEntry>) SetupChildrenFolders(List<JournalTreeItem> tree)
@@ -345,6 +401,10 @@ namespace JournalApp.Data
                         {
                             parentFolder.Children.Add(entry);
                         }
+                        else
+                        {
+                            Debug.WriteLine($"Folder: Name = {entry.Name}, Id = {entry.Id}, ParentId = {entry.FolderId} - entry is pointing to missing parent folder");
+                        }
                     }
                 } else if (treeItem is JournalFolder folder)
                 {
@@ -356,7 +416,7 @@ namespace JournalApp.Data
                         }
                         else
                         {
-                            Debug.WriteLine("Child folder with missing parent detected.Couldnt get value associate with parenfolderid passed in");
+                            Debug.WriteLine($"Folder: {folder.Name}, {folder.Id}, {folder.ParentFolderId} - Child folder with missing parent detected.Couldnt get value associate with parenfolderid passed in");
                         }
                     }
                 }

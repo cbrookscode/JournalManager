@@ -91,8 +91,14 @@ namespace JournalApp.Views
             {
                 NewEntry.FolderId = folder.Id;
             }
-            _journalDatabase.SaveEntry(NewEntry);
-            EntrySaved?.Invoke(NewEntry, null);
+            bool success = _journalDatabase.SaveEntry(NewEntry);
+            if (success)
+            {
+                EntrySaved?.Invoke(NewEntry, null);
+            } else
+            {
+                Debug.WriteLine("Couldn't save entry in database");
+            }
         }
 
         private void SaveEditedEntry(int Id)

@@ -48,8 +48,16 @@ namespace JournalApp.Views
         {
             _journalDatabase = journalDatabase;
             List<JournalTreeItem> treeInput = new List<JournalTreeItem>();
-            treeInput.AddRange(_journalDatabase.GetAllEntries());
-            treeInput.AddRange(_journalDatabase.GetAllFolders());
+            (bool success, List<JournalEntry> entries) = _journalDatabase.GetAllEntries();
+            if (success)
+            {
+                treeInput.AddRange(entries);
+            }
+            (bool success2, List<JournalFolder> folders) = _journalDatabase.GetAllFolders();
+            if (success2)
+            {
+                treeInput.AddRange(folders);
+            }
 
             (_folderTree, _folderDict, _entryDict) = _journalDatabase.SetupChildrenFolders(treeInput);
             _journalDatabase.TreeItemCreated += HandleTreeItemCreated;
@@ -277,8 +285,11 @@ namespace JournalApp.Views
             {
                 if (treeItem is JournalEntry entry)
                 {
-                    _journalDatabase.DeleteEntry(entry.Id);
-                    DeleteTreeEntry(entry);
+                    bool success = _journalDatabase.DeleteEntry(entry.Id);
+                    if (success)
+                    {
+                        DeleteTreeEntry(entry);
+                    }
                 }
                 else if (treeItem is JournalFolder folder)
                 {
