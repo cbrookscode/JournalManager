@@ -99,7 +99,7 @@ namespace JournalApp.Views
             }
         }
 
-        public void MoveEntry(JournalEntry entry, int? oldFolderId)
+        private void MoveEntry(JournalEntry entry, int? oldFolderId)
         {
             if (!_entryDict.TryGetValue(entry.Id, out JournalEntry? treeEntry))
             {
@@ -138,7 +138,7 @@ namespace JournalApp.Views
             treeEntry.Notes = entry.Notes;
         }
 
-        public void DeleteTreeEntry(JournalEntry entry)
+        private void DeleteTreeEntry(JournalEntry entry)
         {
             if (!_entryDict.TryGetValue(entry.Id, out JournalEntry? treeEntry))
             {
