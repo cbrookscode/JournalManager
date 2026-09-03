@@ -2,6 +2,7 @@
 using JournalApp.Models;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -45,9 +46,16 @@ namespace JournalApp.Views
             {
                 CreatedFolder.ParentFolderId = selectedFolder.Id;
             }
-            _journalDatabase.CreateFolder(CreatedFolder);
-            FolderName.Text = "";
-            CreatedFolder = new JournalFolder();
+            bool success = _journalDatabase.CreateJournalTreeItem(CreatedFolder);
+            if (success)
+            {
+                FolderName.Text = "";
+                CreatedFolder = new JournalFolder();
+            }
+            else
+            {
+                Debug.WriteLine("Couldn't save folder in database");
+            }
         }
 
         private void Edit_Name(object sender, RoutedEventArgs e)

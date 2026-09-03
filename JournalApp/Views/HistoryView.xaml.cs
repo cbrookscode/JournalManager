@@ -40,7 +40,7 @@ namespace JournalApp.Views
             bool? result = confirmationWindow.ShowDialog();
             if (result == true)
             {
-                bool success = _journalDatabase.DeleteEntry(entry.Id);
+                bool success = _journalDatabase.DeleteJournalTreeItem(entry);
                 if (success)
                 {
                     RefreshEntries();

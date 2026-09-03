@@ -59,8 +59,10 @@ namespace JournalApp.Views
                 treeInput.AddRange(folders);
             }
 
-            (_folderTree, _folderDict, _entryDict) = _journalDatabase.SetupChildrenFolders(treeInput);
+            (_folderTree, _folderDict, _entryDict) = _journalDatabase.BuildJournalTree(treeInput);
             _journalDatabase.TreeItemCreated += HandleTreeItemCreated;
+            _journalDatabase.TreeItemEdited += HandleTreeItemEdited;
+            _journalDatabase.TreeItemDeleted += HandleTreeItemDeleted;
             FolderView.ItemsSource = _folderTree;
         }
 
@@ -148,27 +150,42 @@ namespace JournalApp.Views
                 _folderTree.Remove(treeEntry);
             } else
             {
-                _entryDict.Remove(treeEntry.Id);
                 _folderDict[treeEntry.FolderId.Value].Children.Remove(treeEntry);
             }
             _entryDict.Remove(treeEntry.Id);
         }
-
-        public void DeleteTreeFolder(JournalFolder folder)
+        private void RemoveTreeBranchFromDictionaries(JournalFolder folder)
         {
-            foreach (JournalTreeItem child in folder.Children) // delete children in folder if any
+            foreach (JournalTreeItem child in folder.Children)
             {
-                _journalDatabase.DeleteJournalTreeItem(child);
+                if (child is JournalEntry entry)
+                {
+                    _entryDict.Remove(entry.Id);
+                }
+                else if (child is JournalFolder childFolder)
+                {
+                    RemoveTreeBranchFromDictionaries(childFolder);
+                }
             }
+
+            _folderDict.Remove(folder.Id);
+        }
+        private void DeleteTreeFolder(JournalFolder folder)
+        {
+            JournalFolder? parent = null;
+
             if (folder.ParentFolderId != null)
             {
-                if (_folderDict.TryGetValue(folder.ParentFolderId.Value, out JournalFolder? parent))
-                {
-                    if (parent != null)
-                    {
-                        parent.Children.Remove(folder); // remove from parent children list if had a parent
-                    }
-                }
+                _folderDict.TryGetValue(
+                    folder.ParentFolderId.Value,
+                    out parent);
+            }
+
+            RemoveTreeBranchFromDictionaries(folder);
+
+            if (parent != null)
+            {
+                parent.Children.Remove(folder);
             }
             else
             {
@@ -227,10 +244,6 @@ namespace JournalApp.Views
             if (treeItem is JournalEntry entry)
             {
                 addEntryWindow.Initialize(_journalDatabase, entry);
-                addEntryWindow.EntrySaved += (savedEntry, oldFolderId) =>
-                {
-                    MoveEntry(savedEntry, oldFolderId);
-                };
 
                 bool? result = addEntryWindow.ShowDialog();
             }
@@ -261,8 +274,19 @@ namespace JournalApp.Views
             if (string.IsNullOrWhiteSpace(treeItem.RenameText))
                 return;
 
+            int? oldParentId = null;
+
+            if (treeItem is JournalEntry entry)
+            {
+                oldParentId = entry.FolderId;
+            }
+            else if (treeItem is JournalFolder folder)
+            {
+                oldParentId = folder.ParentFolderId;
+            }
+
             treeItem.Name = treeItem.RenameText;
-            bool success = _journalDatabase.EditJournalTreeItem(treeItem);
+            bool success = _journalDatabase.EditJournalTreeItem(treeItem, oldParentId);
             if (success)
             {
                 treeItem.IsRenaming = false;
@@ -283,19 +307,7 @@ namespace JournalApp.Views
             bool? result = confirmationWindow.ShowDialog();
             if (result == true)
             {
-                if (treeItem is JournalEntry entry)
-                {
-                    bool success = _journalDatabase.DeleteEntry(entry.Id);
-                    if (success)
-                    {
-                        DeleteTreeEntry(entry);
-                    }
-                }
-                else if (treeItem is JournalFolder folder)
-                {
-                    _journalDatabase.DeleteFolder(folder.Id); // delete folder
-                    DeleteTreeFolder(folder);
-                }
+                bool success = _journalDatabase.DeleteJournalTreeItem(treeItem);
             }
         }
 
@@ -347,6 +359,26 @@ namespace JournalApp.Views
                 {
                     _folderDict[treeFolder.ParentFolderId.Value].Children.Add(treeFolder);
                 }
+            }
+        }
+
+        private void HandleTreeItemDeleted(JournalTreeItem treeItem)
+        {
+            if (treeItem is JournalEntry entry)
+            {
+                DeleteTreeEntry(entry);
+            }
+            else if (treeItem is JournalFolder folder)
+            {
+                DeleteTreeFolder(folder);
+            }
+        }
+
+        private void HandleTreeItemEdited(JournalTreeItem treeItem, int? oldParentId)
+        {
+            if (treeItem is JournalEntry entry)
+            {
+                MoveEntry(entry, oldParentId);
             }
         }
     }

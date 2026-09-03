@@ -60,11 +60,9 @@ namespace JournalApp.Views
 
             if (_editingeEntry == null)
             {
-                Debug.WriteLine("Editing entry is null");
                 SaveNewEntry();
             } else
             {
-                Debug.WriteLine("Editing entry is not null");
                 SaveEditedEntry(_editingeEntry.Id);
             }
             
@@ -91,7 +89,7 @@ namespace JournalApp.Views
             {
                 NewEntry.FolderId = folder.Id;
             }
-            bool success = _journalDatabase.SaveEntry(NewEntry);
+            bool success = _journalDatabase.CreateJournalTreeItem(NewEntry);
             if (success)
             {
                 EntrySaved?.Invoke(NewEntry, null);
@@ -123,7 +121,7 @@ namespace JournalApp.Views
             }
             _editingeEntry.FolderId = newFolderId;
 
-            bool success = _journalDatabase.EditJournalTreeItem(_editingeEntry);
+            bool success = _journalDatabase.EditJournalTreeItem(_editingeEntry, oldFolderId);
             if (success)
             {
                 EntrySaved?.Invoke(_editingeEntry, oldFolderId);
