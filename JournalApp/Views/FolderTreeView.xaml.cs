@@ -24,6 +24,7 @@ namespace JournalApp.Views
     public partial class FolderTreeView : UserControl
     {
         public event Action<JournalFolder?>? FolderSelected;
+        public event Action<JournalTreeItem?>? TreeItemDoubleClick;
         public IEnumerable? ItemsSource
         {
             get => FolderView.ItemsSource;
@@ -33,6 +34,12 @@ namespace JournalApp.Views
         public JournalTreeItem? SelectedItem
         {
             get => FolderView.SelectedItem as JournalTreeItem;
+        }
+
+        private JournalFolder? _selectedFolder;
+        public JournalFolder? SelectedFolder
+        {
+            get => _selectedFolder;
         }
         private JournalDatabase _journalDatabase;
         private ObservableCollection<JournalTreeItem> _folderTree;
@@ -66,22 +73,6 @@ namespace JournalApp.Views
             FolderView.ItemsSource = _folderTree;
         }
 
-        public void SelectFolderById(int? folderId)
-        {
-            if (folderId == null)
-            {
-                return;
-            }
-
-            if (_folderDict.TryGetValue(folderId.Value, out JournalFolder? folder))
-            {
-                TreeViewItem? item = FolderView.ItemContainerGenerator.ContainerFromItem(folder) as TreeViewItem;
-                if (item != null)
-                {
-                    item.IsSelected = true;
-                }
-            }
-        }
 
         public void ClearSelection()
         {
@@ -95,7 +86,22 @@ namespace JournalApp.Views
                         item.IsSelected = false;
                     }
                 }
+            }
+        }
 
+        public void SetSelectedFolderById(int? folderId)
+        {
+            if (folderId == null)
+            {
+                _selectedFolder = null;
+                FolderSelected?.Invoke(null);
+                return;
+            }
+
+            if (_folderDict.TryGetValue(folderId.Value, out JournalFolder? folder))
+            {
+                _selectedFolder = folder;
+                FolderSelected?.Invoke(folder);
             }
         }
 
@@ -236,6 +242,16 @@ namespace JournalApp.Views
             SaveRename(treeItem);
         }
 
+        private void Entry_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ClickCount == 2 &&
+                sender is FrameworkElement element &&
+                element.DataContext is JournalTreeItem treeItem)
+            {
+                TreeItemDoubleClick?.Invoke(treeItem);
+            }
+        }
+
         public void EditEntry_Click(object sender, RoutedEventArgs e)
         {
             AddEntryWindow addEntryWindow = new AddEntryWindow();
@@ -315,9 +331,11 @@ namespace JournalApp.Views
         {
             if (FolderView.SelectedItem is JournalFolder folder)
             {
+                _selectedFolder = folder;
                 FolderSelected?.Invoke(folder);
             } else
             {
+                _selectedFolder = null;
                 FolderSelected?.Invoke(null);
             }
         }

@@ -31,7 +31,7 @@ namespace JournalApp
 
         private void NewEntry_Click(object sender, RoutedEventArgs e)
         {
-            ShowEntryView();
+            ShowNewEntryView();
         }
 
         private void History_Click(object sender, RoutedEventArgs e)
@@ -49,27 +49,30 @@ namespace JournalApp
             HistoryView historyView = new HistoryView(_journalDatabase);
             MainContent.Content = historyView;
         }
-        private void ShowEntryView()
+        private void ShowNewEntryView()
         {
             JournalEntryView journalEntryView = new JournalEntryView();
             journalEntryView.Initialize(_journalDatabase);
-            journalEntryView.EntrySaved += HandleEntrySaved;
             MainContent.Content = journalEntryView;
         }
 
         private void ShowJournalExplorerView()
         {
             JournalExplorerView journalExplorerView = new JournalExplorerView(_journalDatabase);
-            MainContent.Content = journalExplorerView;
+            journalExplorerView.TreeItemDoubleClicked += HandleJournalTreeItemDoubleClicked;
+            SidebarContent.Content = journalExplorerView;
         }
 
-        /// <summary>
-        /// Handler for event subscription to EntrySaved when creating a new JournalEntryView
-        /// </summary>
-        /// <param name="journalEntry"></param>
-        private void HandleEntrySaved(JournalEntry journalEntry, int? oldFolderId)
+        private void HandleJournalTreeItemDoubleClicked(JournalTreeItem treeItem)
         {
-            ShowHistoryView();
+            if (treeItem is JournalEntry entry)
+            {
+                Debug.WriteLine("tree item is an entry");
+                JournalEntryView journalEntryView = new JournalEntryView();
+                journalEntryView.Initialize(_journalDatabase);
+                journalEntryView.LoadEntry(entry);
+                MainContent.Content = journalEntryView;
+            }
         }
     }
 }

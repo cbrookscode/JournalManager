@@ -165,6 +165,41 @@ namespace JournalApp.Data
                 return false;
             }
         }
+
+        public (bool, JournalFolder) GetFolderById(int? id)
+        {
+            if (id == null) return (false, new JournalFolder());
+
+            using SqliteConnection _connection = new SqliteConnection($"Data Source = {_databasePath}");
+            _connection.Open();
+            using SqliteTransaction transaction = _connection.BeginTransaction();
+            try
+            {
+                SqliteCommand command = _connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText =
+                """
+                SELECT FROM JournalFolders
+                WHERE Id = $id;
+                """;
+                command.Parameters.AddWithValue("$id", id);
+                using SqliteDataReader reader = command.ExecuteReader();
+
+                List<JournalFolder> journalFolders = new List<JournalFolder>();
+                reader.Read();
+
+                JournalFolder folder = ConverToJournalFolder(reader);
+                transaction.Commit();
+                return (true, folder);
+            }
+            catch
+            {
+                transaction.Rollback();
+                Debug.WriteLine("issue grabbing folder via provided from db");
+                JournalFolder empty = new();
+                return (false, empty);
+            }
+        }
         public (bool, List<JournalEntry>) GetAllEntries()
         {
             using SqliteConnection connection =

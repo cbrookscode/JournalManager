@@ -37,10 +37,25 @@
                 History View
             </Button>
         </Grid>
-        <ContentControl
-            x:Name="MainContent"
-            Grid.Row="1"
-        >
-        </ContentControl>
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition
+                x:Name="SidebarColumn"
+                Width="300"
+                MinWidth="180"
+            />
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <ContentControl
+                x:Name="SidebarContent"
+                Grid.Column="0"/>
+            <GridSplitter Grid.Column="1"
+                            Width="5"
+                            HorizontalAlignment="Stretch"
+                            ResizeDirection="Columns"/>
+            <ContentControl x:Name="MainContent"
+                            Grid.Column="2"/>
+        </Grid>
     </Grid>
 </Window>

@@ -13,12 +13,6 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock 
-            Grid.Row ="0"
-            Margin="10, 5"
-            Text="Journal App"
-            HorizontalAlignment="Center"
-        />
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>

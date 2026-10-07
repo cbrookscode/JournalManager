@@ -13,7 +13,6 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
 
 namespace JournalApp.Views
@@ -23,6 +22,7 @@ namespace JournalApp.Views
     /// </summary>
     public partial class JournalExplorerView : UserControl
     {
+        public Action<JournalTreeItem> TreeItemDoubleClicked;
         public JournalFolder CreatedFolder { get; set; } = new JournalFolder();
         private JournalDatabase _journalDatabase;
         public JournalExplorerView(JournalDatabase journalDatabase)
@@ -30,6 +30,7 @@ namespace JournalApp.Views
             InitializeComponent();
             _journalDatabase = journalDatabase;
             FolderTree.Initialize(journalDatabase);
+            FolderTree.TreeItemDoubleClick += HandleTreeItemDoubleClick;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -63,6 +64,13 @@ namespace JournalApp.Views
             Button button = (Button)sender;
 
             JournalTreeItem item = (JournalTreeItem)button.Tag;
+        }
+
+        private void HandleTreeItemDoubleClick(JournalTreeItem? treeItem)
+        {
+            if (treeItem == null) return;
+
+            TreeItemDoubleClicked?.Invoke(treeItem);
         }
     }
 }
