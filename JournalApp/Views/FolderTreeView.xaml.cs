@@ -25,6 +25,7 @@ namespace JournalApp.Views
     {
         public event Action<JournalFolder?>? FolderSelected;
         public event Action<JournalTreeItem?>? TreeItemDoubleClick;
+        public event Action<JournalTreeItem>? JournalTreeItemDeleted;
         public IEnumerable? ItemsSource
         {
             get => FolderView.ItemsSource;
@@ -324,7 +325,9 @@ namespace JournalApp.Views
             if (result == true)
             {
                 bool success = _journalDatabase.DeleteJournalTreeItem(treeItem);
+                JournalTreeItemDeleted?.Invoke(treeItem);
             }
+
         }
 
         public void FolderView_SelectedItemChanged(object sender, RoutedEventArgs e)

@@ -23,6 +23,7 @@ namespace JournalApp.Views
     public partial class JournalExplorerView : UserControl
     {
         public Action<JournalTreeItem> TreeItemDoubleClicked;
+        public Action<JournalTreeItem> TreeItemDeleted;
         public JournalFolder CreatedFolder { get; set; } = new JournalFolder();
         private JournalDatabase _journalDatabase;
         public JournalExplorerView(JournalDatabase journalDatabase)
@@ -31,6 +32,7 @@ namespace JournalApp.Views
             _journalDatabase = journalDatabase;
             FolderTree.Initialize(journalDatabase);
             FolderTree.TreeItemDoubleClick += HandleTreeItemDoubleClick;
+            FolderTree.JournalTreeItemDeleted += HandleTreeItemDeleted;
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -71,6 +73,13 @@ namespace JournalApp.Views
             if (treeItem == null) return;
 
             TreeItemDoubleClicked?.Invoke(treeItem);
+        }
+
+        private void HandleTreeItemDeleted(JournalTreeItem? treeItem)
+        {
+            if (treeItem == null) return;
+            TreeItemDeleted?.Invoke(treeItem);
+            
         }
     }
 }

@@ -60,6 +60,5 @@ namespace JournalApp.Models
                 }
             }
         }
-
     }
 }

@@ -20,6 +20,7 @@ namespace JournalApp
     public partial class MainWindow : Window
     {
         private JournalDatabase _journalDatabase;
+        private JournalEntry _displayedEntry;
         public MainWindow()
         {
             InitializeComponent();
@@ -53,6 +54,7 @@ namespace JournalApp
         {
             JournalEntryView journalEntryView = new JournalEntryView();
             journalEntryView.Initialize(_journalDatabase);
+            journalEntryView.EntrySaved += HandleNewEntrySaved;
             MainContent.Content = journalEntryView;
         }
 
@@ -60,7 +62,9 @@ namespace JournalApp
         {
             JournalExplorerView journalExplorerView = new JournalExplorerView(_journalDatabase);
             journalExplorerView.TreeItemDoubleClicked += HandleJournalTreeItemDoubleClicked;
+            journalExplorerView.TreeItemDeleted += HandleTreeItemDeleted;
             SidebarContent.Content = journalExplorerView;
+            MainContent.Content = null;
         }
 
         private void HandleJournalTreeItemDoubleClicked(JournalTreeItem treeItem)
@@ -71,8 +75,23 @@ namespace JournalApp
                 JournalEntryView journalEntryView = new JournalEntryView();
                 journalEntryView.Initialize(_journalDatabase);
                 journalEntryView.LoadEntry(entry);
+                _displayedEntry = entry;
                 MainContent.Content = journalEntryView;
             }
+        }
+
+        private void HandleTreeItemDeleted(JournalTreeItem treeItem)
+        {
+            if (treeItem == null) return;
+            if (treeItem.Id == _displayedEntry.Id)
+            {
+                MainContent.Content = null;
+            }
+        }
+
+        private void HandleNewEntrySaved(JournalEntry entry, int? id)
+        {
+            _displayedEntry = entry;
         }
     }
 }

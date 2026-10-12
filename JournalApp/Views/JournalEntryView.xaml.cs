@@ -27,6 +27,7 @@ namespace JournalApp.Views
 
         private JournalDatabase _journalDatabase;
         private JournalEntry? _editingEntry;
+        public JournalEntry? EditingEntry => _editingEntry;
 
         public JournalEntryView()
         {
