@@ -68,6 +68,251 @@ namespace JournalApp.Data
             }
         }
 
+        public string CreateSnapshot()
+        {
+            string snapshotDirectory = Path.Combine(
+                _appDataDirectory, "Snapshots");
+
+            Directory.CreateDirectory(snapshotDirectory);
+
+            string fileName =
+                $"journal_{DateTime.Now:yyyyMMdd_HHmmss}.db";
+
+            string snapshotPath = Path.Combine(snapshotDirectory, fileName);
+            string tempPath = snapshotPath + ".tmp";
+
+            try
+            {
+                // Step 1: Create backup in temporary file
+                using (SqliteConnection source = new SqliteConnection(
+                    new SqliteConnectionStringBuilder
+                    {
+                        DataSource = _databasePath,
+                        Mode = SqliteOpenMode.ReadOnly,
+                        Pooling = false
+                    }.ToString()))
+                using (SqliteConnection destination = new SqliteConnection(
+                    new SqliteConnectionStringBuilder
+                    {
+                        DataSource = tempPath,
+                        Pooling = false
+                    }.ToString()))
+                {
+                    source.Open();
+                    destination.Open();
+
+                    source.BackupDatabase(destination);
+                }
+
+                // Step 2: Verify backup integrity
+                using (SqliteConnection connection = new SqliteConnection(
+                    new SqliteConnectionStringBuilder
+                    {
+                        DataSource = tempPath,
+                        Mode = SqliteOpenMode.ReadOnly,
+                        Pooling = false
+                    }.ToString()))
+                {
+                    connection.Open();
+
+                    using SqliteCommand command = connection.CreateCommand();
+                    command.CommandText = "PRAGMA integrity_check;";
+
+                    string? result = command.ExecuteScalar()?.ToString();
+
+                    if (result != "ok")
+                    {
+                        throw new InvalidOperationException(
+                            $"Snapshot integrity check failed: {result}");
+                    }
+                }
+
+                // Step 3: Finalize snapshot
+                File.Move(tempPath, snapshotPath);
+
+                return snapshotPath;
+            }
+            catch
+            {
+                // Step 4: Remove incomplete snapshot
+                try
+                {
+                    if (File.Exists(tempPath))
+                    {
+                        File.Delete(tempPath);
+                    }
+                }
+                catch (IOException)
+                {
+                    // Preserve original exception
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Preserve original exception
+                }
+
+                throw;
+            }
+        }
+
+        public string ImportDatabase(string importPath)
+        {
+            // Step 1: Validate the imported database
+            if (!ValidateDatabase(importPath))
+            {
+                throw new InvalidOperationException(
+                    "Database validation failed.");
+            }
+
+            // Prevent importing the currently active database
+            if (Path.GetFullPath(importPath).Equals(
+                Path.GetFullPath(_databasePath),
+                StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "Cannot import the currently active database.");
+            }
+
+            // Step 2: Snapshot the existing database
+            string backupPath = CreateSnapshot();
+
+            // Step 3: Import the new database
+            using (SqliteConnection source = new SqliteConnection(
+                new SqliteConnectionStringBuilder
+                {
+                    DataSource = importPath,
+                    Mode = SqliteOpenMode.ReadOnly,
+                    Pooling = false
+                }.ToString()))
+            using (SqliteConnection destination = new SqliteConnection(
+                new SqliteConnectionStringBuilder
+                {
+                    DataSource = _databasePath,
+                    Mode = SqliteOpenMode.ReadWrite,
+                    Pooling = false
+                }.ToString()))
+            {
+                source.Open();
+                destination.Open();
+
+                source.BackupDatabase(destination);
+            }
+
+            return backupPath;
+        }
+
+        public bool ValidateDatabase(string databasePath)
+        {
+            if (!File.Exists(databasePath))
+            {
+                throw new FileNotFoundException(
+                    "The selected database file does not exist.",
+                    databasePath);
+            }
+
+            using SqliteConnection connection = new SqliteConnection(
+                new SqliteConnectionStringBuilder
+                {
+                    DataSource = databasePath,
+                    Mode = SqliteOpenMode.ReadOnly,
+                    Pooling = false
+                }.ToString());
+
+            connection.Open();
+
+            // Step 1: Check database integrity
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "PRAGMA integrity_check;";
+
+                using SqliteDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    if (reader.GetString(0) != "ok")
+                    {
+                        throw new InvalidOperationException(
+                            "The selected database failed its integrity check.");
+                    }
+                }
+            }
+
+            // Step 2: Validate required tables and columns
+            Dictionary<string, string[]> requiredSchema = new()
+            {
+                {
+                    "JournalEntries",
+                    new[]
+                    {
+                        "Id",
+                        "Title",
+                        "EntryType",
+                        "EntryDate",
+                        "Notes",
+                        "FolderId"
+                    }
+                },
+                {
+                    "JournalFolders",
+                    new[]
+                    {
+                        "Id",
+                        "Name",
+                        "ParentFolderId"
+                    }
+                }
+            };
+
+            foreach (var table in requiredSchema)
+            {
+                HashSet<string> existingColumns = new(
+                    StringComparer.OrdinalIgnoreCase);
+
+                using SqliteCommand command = connection.CreateCommand();
+
+                command.CommandText =
+                    $"PRAGMA table_info(\"{table.Key}\");";
+
+                using SqliteDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    existingColumns.Add(reader.GetString(1));
+                }
+
+                foreach (string requiredColumn in table.Value)
+                {
+                    if (!existingColumns.Contains(requiredColumn))
+                    {
+                        throw new InvalidOperationException(
+                            $"Database validation failed. " +
+                            $"Table '{table.Key}' is missing column '{requiredColumn}'.");
+                    }
+                }
+            }
+
+            // Step 3: Check schema version
+            using (SqliteCommand command = connection.CreateCommand())
+            {
+                command.CommandText = "PRAGMA user_version;";
+
+                int databaseVersion =
+                    Convert.ToInt32(command.ExecuteScalar());
+
+                // Replace with your application's current schema version
+                int currentVersion = 2;
+
+                if (databaseVersion > currentVersion)
+                {
+                    throw new InvalidOperationException(
+                        $"The database version ({databaseVersion}) is newer " +
+                        $"than the application supports ({currentVersion}).");
+                }
+            }
+
+            return true;
+        }
+
         private bool SaveEntry(JournalEntry journalEntry)
         {
             using SqliteConnection _connection = 

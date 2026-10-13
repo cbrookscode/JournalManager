@@ -1,6 +1,7 @@
 ﻿using JournalApp.Data;
 using JournalApp.Models;
 using JournalApp.Views;
+using Microsoft.Win32;
 using System.Diagnostics;
 using System.Text;
 using System.Windows;
@@ -82,7 +83,8 @@ namespace JournalApp
 
         private void HandleTreeItemDeleted(JournalTreeItem treeItem)
         {
-            if (treeItem == null) return;
+            if (treeItem == null || _displayedEntry == null) return;
+            if (treeItem is JournalFolder) return;
             if (treeItem.Id == _displayedEntry.Id)
             {
                 MainContent.Content = null;
@@ -92,6 +94,89 @@ namespace JournalApp
         private void HandleNewEntrySaved(JournalEntry entry, int? id)
         {
             _displayedEntry = entry;
+        }
+
+        private void Snapshot_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string path = _journalDatabase.CreateSnapshot();
+
+                MessageBox.Show(
+                    $"Snapshot created successfully:\n{path}",
+                    "Snapshot Complete");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to create snapshot:\n{ex.Message}",
+                    "Snapshot Error");
+            }
+        }
+
+        private void ImportDatabase_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog dialog = new OpenFileDialog
+            {
+                Title = "Import Journal Database",
+                Filter = "SQLite Database (*.db)|*.db",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() != true)
+            {
+                return;
+            }
+
+            MessageBoxResult confirmation = MessageBox.Show(
+                "Importing this database will replace your current journal.\n\n" +
+                "A snapshot of your current database will be created automatically.\n\n" +
+                "Do you want to continue?",
+                "Confirm Database Import",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning);
+
+            if (confirmation != MessageBoxResult.Yes)
+            {
+                return;
+            }
+
+            try
+            {
+                string backupPath =
+                    _journalDatabase.ImportDatabase(dialog.FileName);
+
+                MessageBox.Show(
+                    "Database imported successfully!\n\n" +
+                    $"Previous database saved to:\n{backupPath}",
+                    "Import Complete",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+
+                // Restart application
+                string executablePath = Environment.ProcessPath
+                    ?? throw new InvalidOperationException(
+                        "Could not determine application path.");
+
+                System.Diagnostics.Process.Start(
+                    new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = executablePath,
+                        UseShellExecute = true
+                    });
+
+                Application.Current.Shutdown();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Database import failed:\n{ex.Message}\n\n" +
+                    "If a snapshot was created, it remains available for recovery.",
+                    "Import Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
     }
 }

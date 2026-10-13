@@ -26,6 +26,8 @@
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
                 <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="auto"/>
             </Grid.ColumnDefinitions>
             <Button Grid.Column="0" Margin="5" Click="JournalExplorer_Click">
                 Journal Explorer
@@ -35,6 +37,12 @@
             </Button>
             <Button Grid.Column="2" Margin="5" Click="History_Click">
                 History View
+            </Button>
+            <Button Grid.Column="3" Margin="5" Click="Snapshot_Click">
+                Create Snapshot
+            </Button>
+            <Button Grid.Column="4" Margin="5" Click="ImportDatabase_Click">
+                Import Database
             </Button>
         </Grid>
         <Grid Grid.Row="1">
